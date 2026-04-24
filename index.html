@@ -1,0 +1,3981 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Könyvelői Adatbázis 2026</title>
+<style>
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+}
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: linear-gradient(135deg, #A0714F 0%, #7A4F2E 100%);
+padding: 20px;
+min-height: 100vh;
+}
+.container {
+max-width: 1400px;
+margin: 0 auto;
+}
+header {
+background: white;
+padding: 25px;
+border-radius: 15px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+margin-bottom: 30px;
+text-align: center;
+}
+h1 {
+color: #A0714F;
+font-size: 2.5em;
+margin-bottom: 10px;
+}
+.subtitle {
+color: #666;
+font-size: 1.1em;
+}
+.search-box {
+background: white;
+padding: 20px;
+border-radius: 15px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+margin-bottom: 30px;
+position: relative;
+}
+.search-input {
+width: 100%;
+padding: 15px 45px 15px 20px;
+font-size: 1.1em;
+border: 2px solid #e0e0e0;
+border-radius: 10px;
+transition: all 0.3s;
+box-sizing: border-box;
+}
+.search-input:focus {
+outline: none;
+border-color: #A0714F;
+box-shadow: 0 0 0 3px rgba(160, 113, 79, 0.15);
+}
+#search-clear {
+display: none;
+position: absolute;
+right: 32px;
+top: 50%;
+transform: translateY(-50%);
+background: none;
+border: none;
+font-size: 1.3em;
+color: #999;
+cursor: pointer;
+padding: 4px 8px;
+border-radius: 50%;
+line-height: 1;
+}
+#search-clear:hover {
+color: #A0714F;
+background: #f0f0f0;
+}
+.category-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+gap: 20px;
+margin-bottom: 30px;
+justify-content: center;
+max-width: 1200px;
+margin-left: auto;
+margin-right: auto;
+padding: 0 40px;
+}
+.category-card {
+background: white;
+border-radius: 15px;
+padding: 25px;
+cursor: pointer;
+transition: all 0.3s;
+box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+border-top: 4px solid #A0714F;
+overflow: visible;
+}
+.category-card:hover {
+transform: translateY(-5px);
+box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+}
+.category-card.active {
+position: relative;
+z-index: 100;
+}
+.category-card h2 {
+color: #A0714F;
+font-size: 1.5em;
+margin-bottom: 15px;
+display: flex;
+align-items: center;
+gap: 10px;
+}
+/* Alap – mindenkit érintő (barna) */
+.card-alap { border-top-color: #A0714F; }
+.card-alap h2 { color: #A0714F; }
+.card-alap .data-item { border-left-color: #A0714F; }
+/* EV – egyéni vállalkozók (zöld) */
+.card-ev { border-top-color: #2E7D5E; }
+.card-ev h2 { color: #2E7D5E; }
+.card-ev .data-item { border-left-color: #2E7D5E; }
+/* Társaság – Kft/Bt/Rt (kék) */
+.card-tarsasag { border-top-color: #3B6BA5; }
+.card-tarsasag h2 { color: #3B6BA5; }
+.card-tarsasag .data-item { border-left-color: #3B6BA5; }
+/* Munkaügyi (narancsa) */
+.card-munkaugyi { border-top-color: #C17F24; }
+.card-munkaugyi h2 { color: #C17F24; }
+.card-munkaugyi .data-item { border-left-color: #C17F24; }
+/* Jelmagyarázat */
+.legend {
+display: flex;
+flex-wrap: wrap;
+gap: 16px;
+background: white;
+padding: 14px 20px;
+border-radius: 12px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+margin-bottom: 24px;
+}
+.legend-item {
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 0.88em;
+color: #444;
+font-weight: 500;
+}
+.legend-dot {
+width: 14px;
+height: 14px;
+border-radius: 4px;
+}
+/* Gyors navigációs sáv */
+.quick-nav {
+display: flex;
+gap: 8px;
+overflow-x: auto;
+padding: 10px 16px;
+background: white;
+border-radius: 12px;
+box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+margin-bottom: 24px;
+-webkit-overflow-scrolling: touch;
+scrollbar-width: none;
+}
+.quick-nav::-webkit-scrollbar { display: none; }
+.quick-nav-btn {
+display: flex;
+align-items: center;
+gap: 6px;
+padding: 8px 14px;
+border-radius: 20px;
+border: 1.5px solid #e0e0e0;
+background: #fafafa;
+cursor: pointer;
+white-space: nowrap;
+font-size: 0.82em;
+color: #444;
+font-weight: 500;
+transition: all 0.2s;
+}
+.quick-nav-btn:hover {
+border-color: #A0714F;
+background: #f5ebe3;
+color: #A0714F;
+}
+.quick-nav-btn .qn-icon { font-size: 1.2em; }
+.category-icon {
+font-size: 1.8em;
+}
+.category-content {
+display: block;
+max-height: 0;
+overflow: hidden;
+margin-top: 0;
+padding-top: 0;
+border-top: 2px solid transparent;
+transition: max-height 0.4s ease, margin-top 0.3s ease, padding-top 0.3s ease, border-color 0.3s ease;
+max-width: 900px;
+margin-left: auto;
+margin-right: auto;
+}
+.category-card.active .category-content {
+max-height: 10000px;
+margin-top: 15px;
+margin-left: auto;
+margin-right: auto;
+padding-top: 15px;
+border-color: #f0f0f0;
+}
+#felul-gomb {
+display: none;
+position: fixed;
+bottom: 24px;
+right: 24px;
+width: 48px;
+height: 48px;
+border-radius: 50%;
+background: #A0714F;
+color: white;
+border: none;
+font-size: 1.4em;
+cursor: pointer;
+box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+z-index: 999;
+transition: opacity 0.3s, transform 0.2s;
+}
+#felul-gomb:hover {
+transform: scale(1.1);
+}
+.data-item {
+padding: 12px;
+margin: 8px 0;
+background: #f8f9fa;
+border-radius: 8px;
+border-left: 4px solid #A0714F;
+transition: all 0.2s;
+}
+.data-item:hover {
+background: #f5ebe3;
+transform: translateX(5px);
+}
+.data-label {
+font-weight: 600;
+color: #333;
+margin-bottom: 5px;
+}
+.data-value {
+color: #A0714F;
+font-size: 1.2em;
+font-weight: bold;
+}
+.data-note {
+color: #666;
+font-size: 0.9em;
+margin-top: 5px;
+}
+.table-container {
+overflow-x: auto;
+margin-top: 15px;
+}
+table {
+width: 100%;
+border-collapse: collapse;
+background: white;
+}
+th, td {
+padding: 12px;
+text-align: left;
+border-bottom: 1px solid #e0e0e0;
+}
+th {
+background: #A0714F;
+color: white;
+font-weight: 600;
+}
+tr:hover {
+background: #f8f9fa;
+}
+.alert-box {
+background: #fff3cd;
+border-left: 4px solid #ffc107;
+padding: 15px;
+border-radius: 8px;
+margin: 10px 0;
+}
+/* Figyelj ha... figyelmeztetés */
+.figyelj-box {
+background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+border: 3px solid #991b1b;
+border-radius: 12px;
+padding: 16px 20px;
+margin: 15px 0;
+box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35);
+position: relative;
+overflow: hidden;
+}
+.figyelj-box::before {
+content: '🚩';
+position: absolute;
+top: -10px;
+right: -10px;
+font-size: 4em;
+opacity: 0.15;
+transform: rotate(15deg);
+}
+.figyelj-header {
+color: white;
+font-weight: bold;
+font-size: 1.15em;
+margin-bottom: 12px;
+display: flex;
+align-items: center;
+gap: 8px;
+text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.figyelj-item {
+background: rgba(255, 255, 255, 0.95);
+border-radius: 8px;
+padding: 12px 14px;
+margin: 8px 0;
+}
+.figyelj-item-title {
+font-weight: 600;
+color: #991b1b;
+margin-bottom: 4px;
+font-size: 0.95em;
+}
+.figyelj-item-text {
+color: #374151;
+font-size: 0.9em;
+line-height: 1.5;
+}
+@media (max-width: 768px) {
+* {
+box-sizing: border-box;
+}
+body {
+padding: 0;
+overflow-x: hidden;
+}
+.container {
+padding: 0;
+overflow-x: hidden;
+}
+h1 {
+font-size: 1.5em;
+padding: 0 10px;
+margin-bottom: 8px;
+}
+header {
+padding: 15px 10px;
+}
+header img {
+height: 40px !important;
+}
+.subtitle {
+font-size: 0.9em;
+padding: 0 10px;
+}
+.search-box {
+padding: 12px;
+margin: 0 10px 18px 10px;
+}
+.legend {
+margin: 0 10px 16px 10px;
+padding: 12px 14px;
+gap: 10px;
+}
+.legend-item {
+font-size: 0.8em;
+}
+.quick-nav {
+padding: 8px 10px;
+gap: 6px;
+margin: 0 10px 16px 10px;
+}
+.quick-nav-btn {
+padding: 7px 10px;
+font-size: 0.78em;
+}
+.quick-facts {
+padding: 0 10px;
+grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+gap: 10px;
+margin: 12px 0;
+}
+.category-grid {
+grid-template-columns: 1fr;
+gap: 12px;
+padding: 0;
+}
+.category-card {
+padding: 16px 14px;
+margin: 0 10px 12px 10px;
+}
+.category-content {
+max-width: 100% !important;
+margin-left: 0 !important;
+margin-right: 0 !important;
+padding: 14px 12px !important;
+}
+.category-card.active .category-content {
+left: 0;
+transform: none;
+width: 100%;
+max-width: 100%;
+position: static;
+}
+.category-card h2 {
+font-size: 1.3em;
+margin: 0 0 12px 0;
+padding: 0;
+}
+.search-input {
+padding: 12px 40px 12px 14px;
+font-size: 1em;
+}
+#search-clear {
+right: 18px;
+}
+.data-item {
+padding: 12px 14px;
+margin: 8px 0;
+}
+.data-value {
+font-size: 1.05em;
+}
+th, td {
+padding: 8px 6px;
+font-size: 0.85em;
+}
+.table-container {
+margin-left: 0;
+margin-right: 0;
+padding: 0;
+overflow-x: auto;
+}
+.alert-box {
+padding: 10px 12px;
+font-size: 0.9em;
+}
+.figyelj-box {
+padding: 12px 14px;
+margin: 10px 0;
+}
+.figyelj-header {
+font-size: 1em;
+margin-bottom: 10px;
+}
+.figyelj-box::before {
+font-size: 3em;
+top: -8px;
+right: -8px;
+}
+.figyelj-item {
+padding: 10px 12px;
+}
+.figyelj-item-title {
+font-size: 0.88em;
+}
+.figyelj-item-text {
+font-size: 0.85em;
+}
+/* Kalkulátorok mobilon */
+.category-content > div[style*="linear-gradient"] {
+margin-left: 0 !important;
+margin-right: 0 !important;
+padding: 14px !important;
+}
+#felul-gomb {
+bottom: 18px;
+right: 18px;
+width: 44px;
+height: 44px;
+font-size: 1.2em;
+}
+.quick-fact {
+padding: 12px;
+}
+.quick-fact-label {
+font-size: 0.8em;
+}
+.quick-fact-value {
+font-size: 1.1em;
+}
+}
+/* Desktop - Popup overlay megoldás (villogásmentes) */
+@media (min-width: 769px) {
+#desktop-popup-overlay {
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background: rgba(0, 0, 0, 0.4);
+z-index: 999;
+display: none;
+opacity: 0;
+transition: opacity 0.2s ease;
+}
+#desktop-popup-overlay.show {
+display: block;
+opacity: 1;
+}
+#desktop-popup-content {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+width: 1100px;
+max-width: calc(100vw - 60px);
+max-height: 90vh;
+overflow-y: auto;
+background: white;
+padding: 30px;
+border-radius: 12px;
+box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+z-index: 1000;
+}
+.category-card {
+cursor: pointer;
+}
+}
+.quick-facts {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 15px;
+margin: 15px 0;
+}
+.quick-fact {
+background: linear-gradient(135deg, #A0714F 0%, #7A4F2E 100%);
+color: white;
+padding: 20px;
+border-radius: 10px;
+text-align: center;
+}
+.quick-fact-label {
+font-size: 0.9em;
+opacity: 0.9;
+margin-bottom: 8px;
+}
+.quick-fact-value {
+font-size: 1.5em;
+font-weight: bold;
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap; justify-content: center;">
+<img src="data:image/png;base64,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" alt="SukorADÓ logó" style="height: 60px; width: auto;">
+<div>
+<h1 style="margin: 0;">📊 MI MENNYI 2026-BAN?</h1>
+<p class="subtitle" style="margin: 5px 0 0 0;">Könyvelői adatbázis - Minden adat egy helyen</p>
+</div>
+</div>
+</header>
+<div class="search-box">
+<input type="text" class="search-input" id="searchInput" placeholder="🔍 Keresés az adatok között... (pl. minimálbér, SZJA, KATA)">
+<button id="search-clear" onclick="document.getElementById('searchInput').value=''; document.getElementById('searchInput').dispatchEvent(new Event('input'));">✕</button>
+</div>
+<div class="legend">
+<div class="legend-item"><div class="legend-dot" style="background:#A0714F;"></div> Alap (mindenkit érintő)</div>
+<div class="legend-item"><div class="legend-dot" style="background:#2E7D5E;"></div> Egyéni vállalkozó</div>
+<div class="legend-item"><div class="legend-dot" style="background:#3B6BA5;"></div> Társaság (Kft/Bt/Rt)</div>
+<div class="legend-item"><div class="legend-dot" style="background:#C17F24;"></div> Munkaügyi</div>
+</div>
+<div class="quick-nav">
+<button class="quick-nav-btn" onclick="quickNav('Minimálbér')"><span class="qn-icon">💰</span> Minimálbér</button>
+<button class="quick-nav-btn" onclick="quickNav('Járulékok')"><span class="qn-icon">⚖️</span> Járulékok</button>
+<button class="quick-nav-btn" onclick="quickNav('SZJA')"><span class="qn-icon">📋</span> SZJA</button>
+<button class="quick-nav-btn" onclick="quickNav('ÁFA')"><span class="qn-icon">🧾</span> ÁFA</button>
+<button class="quick-nav-btn" onclick="quickNav('TAO')"><span class="qn-icon">🏛️</span> TAO</button>
+<button class="quick-nav-btn" onclick="quickNav('KATA')"><span class="qn-icon">💼</span> KATA</button>
+<button class="quick-nav-btn" onclick="quickNav('Átalányadózás')"><span class="qn-icon">📊</span> Átalányadózás</button>
+<button class="quick-nav-btn" onclick="quickNav('Munkaszüneti')"><span class="qn-icon">📅</span> Munkaszüneti</button>
+<button class="quick-nav-btn" onclick="quickNav('Szabadság')"><span class="qn-icon">🏖️</span> Szabadság</button>
+</div>
+<div class="category-grid">
+<!-- Minimálbér és Bérek -->
+<div class="category-card card-alap" onclick="toggleCategory(this)">
+<h2><span class="category-icon">💰</span> Minimálbér & Garantált bérminimum</h2>
+<div class="category-content">
+<div class="quick-facts">
+<div class="quick-fact">
+<div class="quick-fact-label">Minimálbér</div>
+<div class="quick-fact-value">322 800 Ft</div>
+</div>
+<div class="quick-fact">
+<div class="quick-fact-label">Garantált bérmin.</div>
+<div class="quick-fact-value">373 200 Ft</div>
+</div>
+</div>
+<div class="data-item">
+<div class="data-label">Minimálbér (bruttó)</div>
+<div class="data-value">322 800 Ft/hó</div>
+<div class="data-note">Heti: 74 210 Ft | Napi: 14 850 Ft | Órabér: 1 856 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Garantált bérminimum (bruttó)</div>
+<div class="data-value">373 200 Ft/hó</div>
+<div class="data-note">Heti: 85 800 Ft | Napi: 17 160 Ft | Órabér: 2 145 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Minimális órabér (minimálbér × 85%)</div>
+<div class="data-value">1 578 Ft</div>
+<div class="data-note">Mentesített keretösszeg (napi bér 130%-a): 19 305 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Garantált bérmin. órabér (87%)</div>
+<div class="data-value">1 866 Ft</div>
+<div class="data-note">Mentesített keretösszeg (napi bér 130%-a): 22 308 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">TAO által elismert max. költség</div>
+<div class="data-value">29 700 Ft/nap</div>
+<div class="data-note">Minimálbér napi összege × 2</div>
+</div>
+</div>
+</div>
+<!-- Járulékok általános -->
+<div class="category-card card-alap" onclick="toggleCategory(this)">
+<h2><span class="category-icon">⚖️</span> Járulékok & Közteher</h2>
+<div class="category-content">
+<!-- BÉRKALKULATOR -->
+<div style="background: linear-gradient(135deg, #A0714F 0%, #7A4F2E 100%); padding: 18px; border-radius: 10px; margin: 10px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">🧮 Bérkalkulator</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Számolj bruttó vagy nettó bér alapján</div>
+<!-- Inputs -->
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<!-- Számítási mód toggle -->
+<div style="display: flex; gap: 8px; margin-bottom: 8px;">
+<button id="bk-mode-brutto" onclick="bérkalkSetMode('brutto')"
+style="flex: 1; padding: 7px; border: 2px solid white; border-radius: 6px; background: white; color: #A0714F; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+Bruttó → Nettó
+</button>
+<button id="bk-mode-netto" onclick="bérkalkSetMode('netto')"
+style="flex: 1; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+Nettó → Bruttó
+</button>
+</div>
+<!-- Óraszám és minimálbér sor -->
+<div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+<div style="flex: 1; min-width: 130px;">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Heti óraszám</label>
+<input type="number" id="bk-ora" value="40" min="1" max="40" step="1"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1em; margin-top: 3px;"
+oninput="bérkalkResetBruttó()">
+</div>
+<div style="flex: 1; min-width: 160px;">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Arányos minimálbér</label>
+<div id="bk-arányos-minbér" style="background: rgba(255,255,255,0.15); color: white; padding: 8px 10px; border-radius: 6px; font-size: 0.95em; margin-top: 3px; font-weight: bold;"></div>
+</div>
+</div>
+<!-- Szakképzett checkbox -->
+<div style="margin-top: 5px;">
+<label style="color: white; font-size: 0.9em; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+<input type="checkbox" id="bk-szakképzett" onchange="bérkalkResetBruttó()" 
+style="width: 18px; height: 18px; cursor: pointer; accent-color: white;">
+<span>Szakképzett dolgozó (garantált bérminimum: 373 200 Ft/hó)</span>
+</label>
+</div>
+<!-- Bruttó bér input -->
+<div id="bk-brutto-group">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Bruttó bér (Ft/hó)</label>
+<input type="number" id="bk-brutto" value="322800" min="0" step="100"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.1em; margin-top: 3px; font-weight: bold;"
+oninput="bérkalkSzámol()">
+</div>
+<!-- Nettó bér input -->
+<div id="bk-netto-group" style="display: none;">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Nettó bér (Ft/hó)</label>
+<input type="number" id="bk-netto-input" value="214767" min="0" step="100"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.1em; margin-top: 3px; font-weight: bold;"
+oninput="bérkalkSzámolFromNettó()">
+</div>
+<!-- TAO / KIVA toggle -->
+<div style="display: flex; gap: 8px; margin-top: 2px;">
+<button id="bk-btn-tao" onclick="bérkalkSetTárs('tao')"
+style="flex: 1; padding: 7px; border: 2px solid white; border-radius: 6px; background: white; color: #A0714F; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+TAO cég → 13% szocho
+</button>
+<button id="bk-btn-kiva" onclick="bérkalkSetTárs('kiva')"
+style="flex: 1; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+KIVA cég → 10% KIVA
+</button>
+</div>
+</div>
+<!-- Eredmény -->
+<div id="bk-eredmeny" style="margin-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+<!-- Bruttó bér (nettó módban látható) -->
+<div id="bk-brutto-display" style="background: rgba(33, 150, 243, 0.3); border-radius: 8px; padding: 12px; text-align: center; display: none;">
+<div style="color: rgba(255,255,255,0.75); font-size: 0.78em; margin-bottom: 2px;">💼 BRUTTÓ BÉR</div>
+<div id="bk-brutto-value" style="color: white; font-size: 1.6em; font-weight: bold;"></div>
+</div>
+<!-- Munkavállalói levonások -->
+<div style="background: rgba(255,255,255,0.12); border-radius: 8px; padding: 12px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">👤 Munkavállalói levonások</div>
+<div style="display: flex; justify-content: space-between; color: white; font-size: 0.9em; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+<span>SZJA (15%)</span><span id="bk-szja"></span>
+</div>
+<div style="display: flex; justify-content: space-between; color: white; font-size: 0.9em; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+<span>TB járulék (18,5%)</span><span id="bk-tb"></span>
+</div>
+<div style="display: flex; justify-content: space-between; color: white; font-size: 0.88em; padding: 3px 0; opacity: 0.7;">
+<span>Összes levonás</span><span id="bk-összes-levonás"></span>
+</div>
+</div>
+<!-- Nettó bér -->
+<div style="background: rgba(76, 175, 80, 0.3); border-radius: 8px; padding: 12px; text-align: center;">
+<div style="color: rgba(255,255,255,0.75); font-size: 0.78em; margin-bottom: 2px;">💵 NETTÓ BÉR</div>
+<div id="bk-netto" style="color: white; font-size: 1.6em; font-weight: bold;"></div>
+</div>
+<!-- Munkáltatói -->
+<div style="background: rgba(255,255,255,0.12); border-radius: 8px; padding: 12px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">🏢 Munkáltatót terhelő</div>
+<div style="display: flex; justify-content: space-between; color: white; font-size: 0.9em; padding: 3px 0;">
+<span id="bk-munkáltatói-label"></span><span id="bk-munkáltatói"></span>
+</div>
+</div>
+<!-- NAV felé összesen -->
+<div style="background: rgba(255, 152, 0, 0.3); border-radius: 8px; padding: 12px; text-align: center;">
+<div style="color: rgba(255,255,255,0.75); font-size: 0.78em; margin-bottom: 2px;">🏛️ NAV FELÉ ÖSSZESEN</div>
+<div id="bk-nav" style="color: white; font-size: 1.35em; font-weight: bold;"></div>
+<div style="color: rgba(255,255,255,0.6); font-size: 0.75em; margin-top: 2px;">(SZJA + TB + munkáltatói)</div>
+</div>
+<!-- Összes költség a munkáltatónak -->
+<div style="background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; text-align: center;">
+<div style="color: rgba(255,255,255,0.6); font-size: 0.78em;">📊 Összes munkáltatói költség (bruttó + munkáltatói adó)</div>
+<div id="bk-összes-ktg" style="color: white; font-size: 1.15em; font-weight: bold; margin-top: 2px;"></div>
+</div>
+</div>
+</div>
+<!-- BÉRKALKULATOR VÉGE -->
+<!-- OSZTALÉK KALKULATOR -->
+<div style="background: linear-gradient(135deg, #6B46C1 0%, #4A2E8A 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">💰 Osztalék kalkulator</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Számolj bruttó vagy nettó osztalék alapján</div>
+<!-- Inputs -->
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<!-- Számítási mód toggle -->
+<div style="display: flex; gap: 8px; margin-bottom: 8px;">
+<button id="osztak-mode-brutto" onclick="osztakSetMode('brutto')"
+style="flex: 1; padding: 7px; border: 2px solid white; border-radius: 6px; background: white; color: #6B46C1; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+Bruttó → Nettó
+</button>
+<button id="osztak-mode-netto" onclick="osztakSetMode('netto')"
+style="flex: 1; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+Nettó → Bruttó
+</button>
+</div>
+<!-- Bruttó osztalék input -->
+<div id="osztak-brutto-group">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Bruttó osztalék (Ft)</label>
+<input type="number" id="osztak-brutto" value="1000000" min="0" step="1000"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.1em; margin-top: 3px; font-weight: bold;"
+oninput="osztakSzámol()">
+</div>
+<!-- Nettó osztalék input -->
+<div id="osztak-netto-group" style="display: none;">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Nettó osztalék (Ft)</label>
+<input type="number" id="osztak-netto-input" value="720000" min="0" step="1000"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.1em; margin-top: 3px; font-weight: bold;"
+oninput="osztakSzámolFromNettó()">
+</div>
+<!-- Szocho van/nincs toggle -->
+<div style="display: flex; gap: 8px; margin-top: 2px;">
+<button id="osztak-btn-szochoval" onclick="osztakSetSzocho(true)"
+style="flex: 1; padding: 7px; border: 2px solid white; border-radius: 6px; background: white; color: #6B46C1; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+Szocho van (13%)
+</button>
+<button id="osztak-btn-szochonelkül" onclick="osztakSetSzocho(false)"
+style="flex: 1; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.88em; cursor: pointer;">
+Csak SZJA (15%)
+</button>
+</div>
+</div>
+<!-- Eredmény -->
+<div id="osztak-eredmeny" style="margin-top: 16px; display: flex; flex-direction: column; gap: 6px;">
+<!-- Bruttó osztalék (nettó módban látható) -->
+<div id="osztak-brutto-display" style="background: rgba(33, 150, 243, 0.3); border-radius: 8px; padding: 12px; text-align: center; display: none;">
+<div style="color: rgba(255,255,255,0.75); font-size: 0.78em; margin-bottom: 2px;">💼 BRUTTÓ OSZTALÉK</div>
+<div id="osztak-brutto-value" style="color: white; font-size: 1.6em; font-weight: bold;"></div>
+</div>
+<!-- Levonások -->
+<div style="background: rgba(255,255,255,0.12); border-radius: 8px; padding: 12px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">📋 Levonások</div>
+<div style="display: flex; justify-content: space-between; color: white; font-size: 0.9em; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+<span>SZJA (15%)</span><span id="osztak-szja"></span>
+</div>
+<div id="osztak-szocho-row" style="display: flex; justify-content: space-between; color: white; font-size: 0.9em; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+<span>Szocho (13%)</span><span id="osztak-szocho"></span>
+</div>
+<div style="display: flex; justify-content: space-between; color: white; font-size: 0.88em; padding: 3px 0; opacity: 0.7;">
+<span>Összes levonás</span><span id="osztak-összes-levonás"></span>
+</div>
+</div>
+<!-- Nettó osztalék -->
+<div style="background: rgba(76, 175, 80, 0.3); border-radius: 8px; padding: 12px; text-align: center;">
+<div style="color: rgba(255,255,255,0.75); font-size: 0.78em; margin-bottom: 2px;">💵 NETTÓ OSZTALÉK</div>
+<div id="osztak-netto" style="color: white; font-size: 1.6em; font-weight: bold;"></div>
+</div>
+</div>
+</div>
+<!-- OSZTALÉK KALKULATOR VÉGE -->
+<div class="data-item">
+<div class="data-label">Járulékfizetési alsó határ</div>
+<div class="data-value">2 905 200 Ft/év = 96 840 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Járulékfizetési alsó határ (külföldi dolgozó)</div>
+<div class="data-value">715 765 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Kisösszegű megbízási díj</div>
+<div class="data-value">Max 96 840 Ft/hó vagy 3 228 Ft/nap</div>
+</div>
+<div class="data-item">
+<div class="data-label">Rehabilitációs hozzájárulás</div>
+<div class="data-value">2 905 200 Ft/fő/év</div>
+</div>
+<div class="data-item">
+<div class="data-label">Egészségügyi szolgáltatási járulék</div>
+<div class="data-value">12 300 Ft/hó vagy 410 Ft/nap</div>
+</div>
+<div class="alert-box">
+<strong>📋 Nyugellátási alap</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Járulékfizetés alsó határ minimálbér után</div>
+<div class="data-value">101 682 Ft/hó</div>
+<div class="data-note">ebből társ.bizt.járulék (18,5%): 59 718 Ft<br>
+ebből szocho (13%): 41 964 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Járulékfizetés alsó határ gar.bérminimum után</div>
+<div class="data-value">117 558 Ft/hó</div>
+<div class="data-note">ebből társ.bizt.járulék (18,5%): 69 042 Ft<br>
+ebből szocho (13%): 48 516 Ft</div>
+</div>
+</div>
+</div>
+<!-- Átalányadózás -->
+<div class="category-card card-ev" onclick="toggleCategory(this)">
+<h2><span class="category-icon">📊</span> Átalányadózás</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>📊 Átalányadózókat érintő összegek</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Éves bevételi határ</div>
+<div class="data-value">38 736 000 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Csak kiskereskedelem esetén</div>
+<div class="data-value">193 680 000 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adómentes bevétel</div>
+<div class="data-value">1 936 800 Ft</div>
+<div class="data-note">(nincs arányosítás)</div>
+</div>
+<div class="alert-box">
+<strong>📋 Költséghányad szerinti bevételi határok</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Költséghányad</th>
+<th>Bevételi határ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>45% ktghányad</td>
+<td><strong>3 521 455 Ft</strong></td>
+</tr>
+<tr>
+<td>80% ktghányad</td>
+<td><strong>9 684 000 Ft</strong></td>
+</tr>
+<tr>
+<td>90% ktghányad</td>
+<td><strong>19 368 000 Ft</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="data-item" style="cursor: pointer; background: #e8f5e9; border-left: 4px solid #4caf50;" onclick="event.stopPropagation(); toggleSubSection('atalanadozo-80-percent')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>📋 80%-os költséghányad alkalmazására jogosító ÖVTJ'24 számok</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz (SZJA ÁTALÁNYADÓ - 2025-től)</div>
+</div>
+<div id="atalanadozo-80-percent" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+<div class="alert-box">
+<strong>📊 80%-os költséghányad alkalmazására jogosító tevékenységek (ÖVTJ'24 szerint)</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>ÖVTJ'24 szám 2025-től</th>
+<th>Régi TESZOR 2024-ig</th>
+<th>Megnevezés</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01, 02</td>
+<td>01, 02</td>
+<td>Mezőgazdasági, erdőgazdálkodási</td>
+</tr>
+<tr>
+<td>016</td>
+<td>01.2 (01.6 2022-től!)</td>
+<td>Mezőgazdasági, betakarítást követő szolgáltatás</td>
+</tr>
+<tr>
+<td>0170</td>
+<td>01.70.10</td>
+<td>Vadgazdálkodáshoz kapcsolódó szolgáltatás</td>
+</tr>
+<tr>
+<td>0240</td>
+<td>02.40.10</td>
+<td>Erdészeti szolgáltatás</td>
+</tr>
+<tr>
+<td>031</td>
+<td>03.00.71</td>
+<td>Halászati szolgáltatás</td>
+</tr>
+<tr>
+<td>032</td>
+<td>03.00.72</td>
+<td>Halgazdálkodási szolgáltatás</td>
+</tr>
+<tr>
+<td>05-től 09-ig</td>
+<td>05-től 09-ig</td>
+<td>Bányászati tevékenység (termék-előállítás)</td>
+</tr>
+<tr>
+<td>10-től 32-ig</td>
+<td>10-től 32-ig</td>
+<td>Feldolgozóipari termék-előállítás, kivéve a bérmunkában végzett szolgáltatások és az egyéb sokszorosítás ÖVTJ'24 1820</td>
+</tr>
+<tr>
+<td>3313</td>
+<td>33.1</td>
+<td>Ipari gép, berendezés, eszköz javítása</td>
+</tr>
+<tr>
+<td>41-től 42-ig</td>
+<td>41, 42</td>
+<td>Építőipari kivitelezés</td>
+</tr>
+<tr>
+<td>43</td>
+<td>43</td>
+<td>Speciális szaképítés (ideértve az épületgépészeti berendezések javítását is) (korábbi: építőipari szolgáltatás)</td>
+</tr>
+<tr>
+<td>43</td>
+<td>43.21, 43.22, 43.29</td>
+<td>Épületgépészeti berendezések javítása</td>
+</tr>
+<tr>
+<td>4520</td>
+<td>45.20</td>
+<td>Gépjárműjavítás</td>
+</tr>
+<tr>
+<td>49320</td>
+<td>49.32.11</td>
+<td>Taxis személyszállítás</td>
+</tr>
+<tr>
+<td>493901</td>
+<td>49.39.39</td>
+<td>Egyéb máshová nem sorolt szárazföldi személyszállítás</td>
+</tr>
+<tr>
+<td>493909</td>
+<td>49.32.12</td>
+<td>Sofőrszolgálat (korábbi: személygépjármű kölcsönzése vezetővel)</td>
+</tr>
+<tr>
+<td>4941</td>
+<td>49.41.1</td>
+<td>Közúti áruszállítás</td>
+</tr>
+<tr>
+<td>56</td>
+<td>56</td>
+<td>Vendéglátó tevékenység (a kereskedelmi tevékenységek végzésének feltételeiről szóló kormányrendelet alapján folytatott)</td>
+</tr>
+<tr>
+<td>7420</td>
+<td>74.20</td>
+<td>Fényképészet</td>
+</tr>
+<tr>
+<td>8130</td>
+<td>81.30.10</td>
+<td>Zöldterület-kezelés</td>
+</tr>
+<tr>
+<td>855301</td>
+<td>85.53.11</td>
+<td>Járművezető oktatás (személygépjármű-vezető képzés)</td>
+</tr>
+<tr>
+<td>951</td>
+<td>95.1</td>
+<td>Számítógép, kommunikációs eszköz javítása</td>
+</tr>
+<tr>
+<td>952</td>
+<td>95.2</td>
+<td>Személyi, háztartási cikk javítása</td>
+</tr>
+<tr>
+<td>9601</td>
+<td>96.01</td>
+<td>Textil, szőrme mosása, tisztítása</td>
+</tr>
+<tr>
+<td>9602</td>
+<td>96.02</td>
+<td>Fodrászat, szépségápolás</td>
+</tr>
+<tr>
+<td>960909-től 960911-ig</td>
+<td>96.09.11</td>
+<td>Hobbiállat-gondozás</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box" style="margin-top: 20px;">
+<strong>🆕 Új tevékenységek 2025-től:</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>ÖVTJ'24 szám</th>
+<th>Megnevezés</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>532003</td>
+<td>Az egyetemes postai szolgáltató megbízása alapján elvégzett postai közreműködő és egyéb tevékenységek<br>
+<em>532003 mellett végezhető egyéb tevékenységek</em></td>
+</tr>
+<tr>
+<td>821101</td>
+<td>Összetett adminisztratív szolgáltatás (egyéb tevékenység 2025-től!)</td>
+</tr>
+<tr>
+<td>829902</td>
+<td>M.n.s. egyéb gazdasági tevékenységet segítő szolgáltatás (egyéb tevékenység 2025-től!)</td>
+</tr>
+<tr>
+<td>661901</td>
+<td>Egyéb pénzügyi kiegészítő tevékenység m.n.s. (egyéb tevékenység 2025-től!)</td>
+</tr>
+<tr>
+<td>662201</td>
+<td>Biztosítási ügynöki, brókeri tevékenység (egyéb tevékenység 2025-től!)</td>
+</tr>
+<tr>
+<td>920003</td>
+<td>Szerencsejáték-szelvény ügynöki értékesítése (egyéb tevékenység 2025-től!)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="alert-box">
+<strong>💰 Fizetendő közteher adómentes jövedelem esetén</strong><br>
+(vagy felette a minimum fizetendő járulék havonta)
+</div>
+<div class="data-item">
+<div class="data-label">"Mellékállású" v. nyugdíjas EV</div>
+<div class="data-value">0 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Főfoglalkozású - minimálbér után</div>
+<div class="data-value">101 682 Ft</div>
+<div class="data-note">ebből társ.bizt.jár. (18,5%): 59 718 Ft<br>
+ebből szocho (13%): 41 964 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Főfoglalkozású - gar.bérminimum után</div>
+<div class="data-value">117 558 Ft</div>
+<div class="data-note">ebből társ.bizt.jár. (18,5%): 69 042 Ft<br>
+ebből szocho (13%): 48 516 Ft</div>
+</div>
+<div class="alert-box">
+<strong>⚠️ Adómentes jövedelem felett a járulékalap a göngyölítéses módszer alapján kerül meghatározásra!</strong>
+</div>
+<div class="alert-box">
+<strong>📋 Egyéni vállalkozók 2658-as bevallási gyakorisága:</strong><br>
+MINDENKI-re negyedéves (kivéve soron kívüli)
+</div>
+<!-- Figyelj ha... szekció -->
+<div class="figyelj-box">
+<div class="figyelj-header">
+<span style="font-size: 1.3em;">🚨</span>
+<span>FIGYELJ, HA...</span>
+</div>
+<div class="figyelj-item">
+<div class="figyelj-item-title">Évközi indulás</div>
+<div class="figyelj-item-text">Az <strong>adómentes keretet (1 936 800 Ft) NEM kell arányosítani</strong>, de a <strong>bevételi határt (38 736 000 Ft) IGEN</strong> arányosítani kell.</div>
+</div>
+</div>
+<!-- Arányosítási kalkulátor -->
+<div style="background: linear-gradient(135deg, #2E7D5E 0%, #1e5a40 100%); padding: 18px; border-radius: 10px; margin: 10px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 12px;">🧮 Bevételi határ arányosítási kalkulátor</div>
+<div style="color: rgba(255,255,255,0.85); font-size: 0.85em; margin-bottom: 10px;">Év közben induló vállalkozás esetén a 38 736 000 Ft-os bevételi határ arányos része: 38 736 000 / 365 × aktív napok</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+<label style="color: white; font-size: 0.9em; white-space: nowrap;">Vállalkozás indulási napja:</label>
+<input type="date" id="atalany-indulas-datum"
+style="padding: 8px 12px; border: none; border-radius: 6px; font-size: 1em; flex: 1; min-width: 180px; max-width: 220px;"
+min="2026-01-01" max="2026-12-31"
+onchange="számolÁtalány()" oninput="számolÁtalány()">
+</div>
+<div id="atalany-eredmeny" style="margin-top: 14px; display: none;">
+<div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 12px;">
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 4px;" id="atalany-napok-text"></div>
+<div style="color: white; font-size: 1.4em; font-weight: bold;" id="atalany-keret-value"></div>
+<div style="color: rgba(255,255,255,0.7); font-size: 0.8em; margin-top: 4px;" id="atalany-keplet-text"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- KATA -->
+<div class="category-card card-ev" onclick="toggleCategory(this)">
+<h2><span class="category-icon">💼</span> KATA (Kisadózó)</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">KATA havi összeg</div>
+<div class="data-value">50 000 Ft/hó</div>
+<div class="data-note">Ellátási alap: 108 000 Ft/hó</div>
+</div>
+</div>
+</div>
+<!-- TAO -->
+<div class="category-card card-tarsasag" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🏛️</span> TAO (Társasági adó)</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">TAO mértéke</div>
+<div class="data-value">9%</div>
+</div>
+<div class="data-item">
+<div class="data-label">TAO alanyok</div>
+<div class="data-value">Kft, Bt, nyilvánosan nem forgalmazott Rt</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adóalap</div>
+<div class="data-value">Adóelőtti eredmény ± különbözetek</div>
+<div class="data-note">Állandó különbözetek + ideiglenes különbözetek</div>
+</div>
+<div class="alert-box">
+<strong>📋 Előleg fizetés</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Negyedéves előleg</div>
+<div class="data-value">Ha előző évi adóalap ≤ 1 Mrd Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Havi előleg</div>
+<div class="data-value">Ha előző évi adóalap > 1 Mrd Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Bevallás határidő</div>
+<div class="data-value">Május 31.</div>
+<div class="data-note">Az adóévet követő év május 31-ig</div>
+</div>
+<div class="data-item">
+<div class="data-label">Előjelzés határidő</div>
+<div class="data-value">December 20.</div>
+<div class="data-note">Az adóévet követő előjelzés a tárgyévi december 20-ig</div>
+</div>
+<div class="alert-box">
+<strong>📋 Veszteség elhatárolás</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Előre</div>
+<div class="data-value">Korlátlan</div>
+<div class="data-note">A keletkező veszteség korlátlanul előre vihető</div>
+</div>
+<div class="data-item">
+<div class="data-label">Hátra</div>
+<div class="data-value">5 év</div>
+<div class="data-note">Legfeljebb 5 adóévre hátra vihető</div>
+</div>
+<div class="alert-box">
+<strong>⚖️ TAO vs KIVA összehasonlítás</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Munkáltatói terhelés</div>
+<div class="data-value">TAO: szocho 13% | KIVA: 10%</div>
+<div class="data-note">KIVA esetén a szocho helyett KIVA munkáltatói járulékot fizet</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adóalap jellege</div>
+<div class="data-value">TAO: nyereség alapú | KIVA: bevétel alapú</div>
+<div class="data-note">TAO kedvezőbb veszteség vagy alacsony nyereség esetén</div>
+</div>
+<div class="data-item">
+<div class="data-label">KIVA bevételi határ</div>
+<div class="data-value">1 milliárd Ft/év</div>
+<div class="data-note">Felette csak TAO választható</div>
+</div>
+</div>
+</div>
+<!-- KIVA -->
+<div class="category-card card-tarsasag" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🏢</span> KIVA</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">KIVA mértéke</div>
+<div class="data-value">10%</div>
+</div>
+<div class="data-item">
+<div class="data-label">Bevételi határ</div>
+<div class="data-value">1 milliárd Ft/év</div>
+<div class="data-note">Felette csak TAO választható</div>
+</div>
+<!-- NÖVELŐ lenyíló -->
+<div class="data-item" style="cursor: pointer; background: #e8f5e9; border-left: 4px solid #2E7D5E;" onclick="event.stopPropagation(); toggleSubSection('kiva-novelő')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>📈 Növelő tételek</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz</div>
+</div>
+<div id="kiva-novelő" style="display: none; margin-top: 15px; padding: 15px; background: #f1f8f2; border-radius: 8px;">
+<div class="data-item">
+<div class="data-label">Tőkekivonás</div>
+<div class="data-note">Alaptőke leszállítása, Cégbíróságnál bejegyzett</div>
+</div>
+<div class="data-item">
+<div class="data-label">Fizetendő osztálék</div>
+<div class="data-note">Az adóévben jóváhagyott, kiosztandó összeg. NEM tartozik ide a kisvállalatiadó-alanyiságot megelőző évek adózott eredménye.</div>
+</div>
+<div class="data-item">
+<div class="data-label">Pénztár értékének növekedése</div>
+<div class="data-note">Csak a mentesített értéket meghaladó rész</div>
+</div>
+<div class="data-item">
+<div class="data-label">Nem vállalkozási költségek</div>
+<div class="data-note">Tao. tv. 3. sz. melléklet A) szerint meghatározott tételek</div>
+</div>
+<div class="data-item">
+<div class="data-label">Bírság, pótlék</div>
+<div class="data-note">Az adóalanyiság alatt megállapított és megfizetett összeg</div>
+</div>
+<div class="data-item">
+<div class="data-label">Behajthatatlan követelés elengedése</div>
+<div class="data-note">Kivéve, ha magánszemélynek engedik el, vagy külföldi/belföldi személlyel nem áll vállalkozási viszony</div>
+</div>
+</div>
+<!-- CSÖKKENTŐ lenyíló -->
+<div class="data-item" style="cursor: pointer; background: #fce4ec; border-left: 4px solid #c62828;" onclick="event.stopPropagation(); toggleSubSection('kiva-csökkentő')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>📉 Csökkentő tételek</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz</div>
+</div>
+<div id="kiva-csökkentő" style="display: none; margin-top: 15px; padding: 15px; background: #fdf2f2; border-radius: 8px;">
+<div class="data-item">
+<div class="data-label">Tőkebevonás</div>
+<div class="data-note">Alaptőke emelése, Cégbíróságnál bejegyzett</div>
+</div>
+<div class="data-item">
+<div class="data-label">Kapott (járó) osztálék</div>
+<div class="data-note">Az adóévben kapott összeg, külföldi adóval csökkentve. Feltétel: a megállapító társaság nem számólja el a tőkét az adózás előtti eredményben.</div>
+</div>
+<div class="data-item">
+<div class="data-label">Pénztár értékének csökkenése</div>
+<div class="data-note">Csak a mentesített értéket meghaladó rész. A kisvállalatiadó-alanyiság megszűnésének adóévében is figyelembe vehető.</div>
+</div>
+</div>
+<div class="data-item">
+<div class="data-label">Pénztár mentesített értéke</div>
+<div class="data-value">Bevétel × 5%, min. 1 M Ft</div>
+<div class="data-note">A tárgyévi összes bevétel 5%-a, de legalább 1 millió Ft, vagy az adóalanyiság első évének nyitó mérlegében a pénztár kimutatott értéke – a nagyobb érték az irányadó.</div>
+</div>
+</div>
+</div>
+<!-- ÁFA -->
+<div class="category-card card-tarsasag" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🧾</span> ÁFA</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">ÁFA alanyi mentesség határa</div>
+<div class="data-value">20 000 000 Ft/év</div>
+</div>
+<!-- ÁFA KALKULATOR -->
+<div style="background: linear-gradient(135deg, #2196F3 0%, #1565C0 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">🧮 ÁFA kalkulátor</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Írj be bármelyik értéket – számítja a többi kettőt</div>
+<!-- ÁFA kulcs választó -->
+<div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+<button id="afa-btn-27" onclick="afaSetKulcs(27)"
+style="flex: 1; min-width: 90px; padding: 6px; border: 2px solid white; border-radius: 6px; background: white; color: #2196F3; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+27%
+</button>
+<button id="afa-btn-18" onclick="afaSetKulcs(18)"
+style="flex: 1; min-width: 90px; padding: 6px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+18%
+</button>
+<button id="afa-btn-5" onclick="afaSetKulcs(5)"
+style="flex: 1; min-width: 90px; padding: 6px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+5%
+</button>
+</div>
+<!-- Input mezők -->
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Nettó ár (ÁFA nélkül, Ft)</label>
+<input type="number" id="afa-netto" min="0" step="1" placeholder="Nettó"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.05em; margin-top: 3px;"
+oninput="afaSzámolFromNettó()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">ÁFA összege (Ft)</label>
+<input type="number" id="afa-osszeg" min="0" step="1" placeholder="ÁFA"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.05em; margin-top: 3px;"
+oninput="afaSzámolFromÁFA()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Bruttó ár (ÁFA-val, Ft)</label>
+<input type="number" id="afa-brutto" min="0" step="1" placeholder="Bruttó"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.05em; margin-top: 3px;"
+oninput="afaSzámolFromBruttó()">
+</div>
+</div>
+<!-- Eredmény kiemelés -->
+<div style="margin-top: 14px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; display: flex; justify-content: space-around; text-align: center; flex-wrap: wrap; gap: 10px;">
+<div style="flex: 1; min-width: 100px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Nettó</div>
+<div id="afa-netto-result" style="color: white; font-size: 1.2em; font-weight: bold;">0 Ft</div>
+</div>
+<div style="flex: 1; min-width: 100px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em;">ÁFA <span id="afa-kulcs-label">(27%)</span></div>
+<div id="afa-osszeg-result" style="color: white; font-size: 1.2em; font-weight: bold;">0 Ft</div>
+</div>
+<div style="flex: 1; min-width: 100px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Bruttó</div>
+<div id="afa-brutto-result" style="color: white; font-size: 1.2em; font-weight: bold;">0 Ft</div>
+</div>
+</div>
+</div>
+<!-- ÁFA KALKULATOR VÉGE -->
+<div class="data-item" style="cursor: pointer; background: #fff3cd; border-left: 4px solid #ffc107;" onclick="event.stopPropagation(); toggleSubSection('afa-le-nem-vonhato')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>❌ Le nem vonható ÁFA szabályok</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz</div>
+</div>
+<div id="afa-le-nem-vonhato" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+<div class="alert-box">
+<strong>❌ Nem vonható le ÁFA a következő termékek elszámolásakor:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Üzemanyag</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Motorbenzin és egyéb, személygépkocsi üzemeltetéséhez szükséges üzemanyag</div>
+</div>
+<div class="data-item">
+<div class="data-label">Személygépkocsi*</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Kivéve: halottszállító személygépkocsi<br>
+*Személygépkocsinak az a jármű számít, amely 2018. január 1-jén hatályos vámtarifaszám besorolás alapján ennek minősült.</div>
+</div>
+<div class="data-item">
+<div class="data-label">Személygépjármű üzemeltetése, fenntartása</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Pl. alkatrész, tisztítószer</div>
+</div>
+<div class="data-item">
+<div class="data-label">Motorkerékpár</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">125 cm³-nél nagyobb hengerűrtartalmú motorkerékpár</div>
+</div>
+<div class="data-item">
+<div class="data-label">Jacht és vízi járművek</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Jacht, valamint sportolási vagy szórakozási céllal használt más vízi közlekedési eszköz</div>
+</div>
+<div class="data-item">
+<div class="data-label">Lakóingatlan</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Az Áfa tv. értelmező rendelkezés keretében meghatározza a lakóingatlan fogalmát</div>
+</div>
+<div class="data-item">
+<div class="data-label">Lakóingatlan építése, felújítása</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Lakóingatlan építéséhez, felújításához felhasznált termékek</div>
+</div>
+<div class="data-item">
+<div class="data-label">Élelmiszer és ital</div>
+<div class="data-value">❌ Nem levonható</div>
+</div>
+<div class="alert-box" style="margin-top: 20px;">
+<strong>❌ Szolgáltatások, amelyekhez kapcsolódóan felmerült ÁFÁ-t tilos levonni:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Taxiszolgáltatás</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">TESZOR'15 - 49.32.11 (2018. január 1-jén hatályos besorolás alapján)</div>
+</div>
+<div class="data-item">
+<div class="data-label">Parkolási szolgáltatás</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Kivéve, ha a 3,5 tonnát meghaladó legnagyobb össztömegű szárazföldi közlekedési eszközzel kapcsolatban merül fel</div>
+</div>
+<div class="data-item">
+<div class="data-label">Autópályadíj</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Kivéve, ha 3,5 tonnát meghaladó legnagyobb össztömegű szárazföldi közlekedési eszközzel kapcsolatban merül fel</div>
+</div>
+<div class="data-item">
+<div class="data-label">Vendéglátóipari szolgáltatás</div>
+<div class="data-value">❌ Nem levonható</div>
+</div>
+<div class="data-item">
+<div class="data-label">Szórakoztatási célú szolgáltatás</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">TESZOR'15 56.30, 90.01, 90.02, 93.21, 93.29</div>
+</div>
+<div class="data-item">
+<div class="data-label">Lakóingatlan építése, felújítása</div>
+<div class="data-value">❌ Nem levonható</div>
+<div class="data-note">Lakóingatlan építéséhez, felújításához kapcsolódó szolgáltatások</div>
+</div>
+<div class="alert-box" style="margin-top: 20px;">
+<strong>⚠️ Részben levonható ÁFA - 70% levonható (30% nem):</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Telefonszolgáltatások - 30% NEM levonható</div>
+<div class="data-value">70% levonható</div>
+<div class="data-note">
+a) Vezetékes telefonszolgáltatás (TESZOR'15 61.10.11, 61.10.12)<br>
+b) Vezeték nélküli telefonszolgáltatás (TESZOR'15 61.20.12, 61.20.13, 61.20.14-ből)<br>
+c) Internetprotokoll alkalmazó, beszédcélú szolgáltatás (TESZOR'15 61.10.49-ből, 61.20.49-ből, 61.90.10-ből)
+</div>
+</div>
+<div class="alert-box" style="margin-top: 20px;">
+<strong>⚠️ Részben levonható ÁFA - 50% levonható:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Személygépkocsi szolgáltatások - 50% NEM levonható</div>
+<div class="data-value">50% levonható</div>
+<div class="data-note">
+a) Személygépkocsi üzemeltetéséhez, fenntartásához szükséges szolgáltatás<br>
+b) Személygépkocsi bérleti díja
+</div>
+</div>
+<div class="alert-box" style="margin-top: 20px;">
+<strong>⚠️ FIGYELEM:</strong> Amennyiben az említett szolgáltatások kizárólag adólevonásra nem jogosító tevékenységhez kapcsolódnak, akkor az áfa részben sem vonható le.
+</div>
+<div class="alert-box" style="margin-top: 20px;">
+<strong>📋 NAV álláspont - Vegyes tevékenység esetén:</strong><br>
+Ha az említett szolgáltatások adólevonásra jogosító ÉS adólevonásra nem jogosító tevékenységhez egyaránt kapcsolódnak:<br><br>
+1. A beszerzést terhelő áfából ki kell számítani az említett arány alapján számított áfát<br>
+2. Ebből a levonhatóként elszámolható részt arányosítással kell meghatározni
+</div>
+</div>
+<!-- ÁFA mentességek lenyitható -->
+<div class="data-item" style="cursor: pointer; background: #ede7f6; border-left: 4px solid #673ab7;" onclick="event.stopPropagation(); toggleSubSection('afa-mentessegek')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>✅ ÁFA alóli mentességek (85-87. §)</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz</div>
+</div>
+<div id="afa-mentessegek" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+<div class="alert-box">
+<strong>✅ 85. § – Mentesség a tevékenység közérdekű jellegére tekintettel</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Pont</th>
+<th>Mentes tevékenység</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a)</td>
+<td>Egyetemes postai szolgáltatás</td>
+</tr>
+<tr>
+<td>b)</td>
+<td>Közszolgáltató humán-egészségügyi ellátás (betegápolás, betegszállítás + kapcsolódó termékek)</td>
+</tr>
+<tr>
+<td>c)</td>
+<td>Humán-egészségügyi tevékenység (ideértve természetgyógyászatot)</td>
+</tr>
+<tr>
+<td>d)</td>
+<td>Emberi szövet, vér, anyatej értékesítése + szerv adományozás</td>
+</tr>
+<tr>
+<td>e)</td>
+<td>Fogorvosi/fogtechnikusi szolgáltatás + fogászati protézis</td>
+</tr>
+<tr>
+<td>f)</td>
+<td>Közszolgáltató szociális ellátás (étkeztetés kivételével)</td>
+</tr>
+<tr>
+<td>g)</td>
+<td>Közszolgáltató gyermek- és ifjúságvédelem (étkeztetés kivételével)</td>
+</tr>
+<tr>
+<td>h)</td>
+<td>Közszolgáltató bölcsődei ellátás (étkeztetés kivételével)</td>
+</tr>
+<tr>
+<td>i)</td>
+<td>Köznevelés, szakképzés, felsőoktatás keretében nyújtott szolgáltatás (étkeztetés kivételével)</td>
+</tr>
+<tr>
+<td>j)</td>
+<td>Óvodai, tanári, oktatói, nevelői tevékenység (ideértve magánóraadást)</td>
+</tr>
+<tr>
+<td>k)</td>
+<td>Vallási jogi személy személyzet-rendelkezés + lelki segély</td>
+</tr>
+<tr>
+<td>l)</td>
+<td>Nyereségszerzésre nem törekvő szervezet tagjainak nyújtott szolgáltatás (feltételek mellett)</td>
+</tr>
+<tr>
+<td>m)</td>
+<td>Közszolgáltató sportolással, testedzéssel kapcsolatos szolgáltatás (uszoda/strand/sportesemény kivételével)</td>
+</tr>
+<tr>
+<td>n)</td>
+<td>Népművészeti/iparművészeti termékek kiállítása, vására (zsűriszámmal ellátott)</td>
+</tr>
+<tr>
+<td>o)</td>
+<td>Közszolgálati rádiós és audiovizuális médiaszolgáltatás</td>
+</tr>
+<tr>
+<td>p)</td>
+<td>Együttműködő közösség által a közös cél elérésére nyújtott szolgáltatás (feltételek mellett)</td>
+</tr>
+<tr>
+<td>q)</td>
+<td>Hatósági engedéllyel végzett sérült/betegszállítás speciális eszközben</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>📋 85. § (2) – Egyéb oktatás vagy képzés</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Mentes oktatási formák</div>
+<div class="data-value">4 fajta</div>
+<div class="data-note">
+a) Szakmai oktatás/képzés + szakmai/képesítő vizsga<br>
+b) Felnőttképzés (bejelentés/engedély alapján) + vizsga<br>
+c) Nyelvi képzés + elismert nyelvvizsga<br>
+d) Tanulmányi és tehetséggondozó verseny szervezése
+</div>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>📋 85. § (3) – Feltételek</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Hatósági engedélyhez kötött tevékenység</div>
+<div class="data-value">Engedély szükséges</div>
+<div class="data-note">A mentesség feltétele, hogy az engedély possession alapján végezze a tevékenységét.</div>
+</div>
+<div class="data-item">
+<div class="data-label">Képesítéshez kötött tevékenység</div>
+<div class="data-value">Legalább 1 képesített személy</div>
+<div class="data-note">A tevékenykedők között legalább 1 természetes személy teljesíti a képesítési követelményeket.</div>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>✅ 86. § – Mentesség a tevékenység egyéb sajátos jellegére tekintettel</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Pont</th>
+<th>Mentes tevékenység</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a)</td>
+<td>Biztosítási, viszontbiztosítási szolgáltatás (+ alkusz/közvetítő)</td>
+</tr>
+<tr>
+<td>b)</td>
+<td>Hitel-, pénzkölcsön nyújtás és közvetítés</td>
+</tr>
+<tr>
+<td>c)</td>
+<td>Hitelhez kapcsolódó biztosítéki kötelezettség vállalása</td>
+</tr>
+<tr>
+<td>d)</td>
+<td>Fizetési, átutalási, számvitelű szolgáltatások (kivéve kinnlevőség behajtása)</td>
+</tr>
+<tr>
+<td>e)</td>
+<td>Törvényes fizetőeszközzel kapcsolatos szolgáltatás (kivéve numizmatikai gyűjteményt)</td>
+</tr>
+<tr>
+<td>f)</td>
+<td>Tulajdonosi/tagsági jog átengedése (kivéve materializált értékpapír kezelése)</td>
+</tr>
+<tr>
+<td>g)</td>
+<td>Befektetési/kockázati tőkealap kezelése, portfólió-kezelés</td>
+</tr>
+<tr>
+<td>h)</td>
+<td>Postai bélyeg, illetékbélyeg névértéken történő értékesítése</td>
+</tr>
+<tr>
+<td>i)</td>
+<td>Szerencsejáték-szolgáltatás (+ közvetítés, koncesszió)</td>
+</tr>
+<tr>
+<td>j)</td>
+<td>Beépített ingatlan értékesítése <em>(kivéve: első használatba vitel előtt, vagy 2 éven belül, vagy rendeltetésváltozás után 2 éven belül)</em></td>
+</tr>
+<tr>
+<td>k)</td>
+<td>Beépítetlen ingatlan értékesítése (kivéve építési telek)</td>
+</tr>
+<tr>
+<td>l)</td>
+<td>Ingatlan bérbeadása, haszonbérbeadása <em>(kivéve: kereskedelmi szállás, parkolás, gép bérbeadás, széf)</em></td>
+</tr>
+<tr>
+<td>m)</td>
+<td>Katonai/nemzetbiztonsági célú termék/szolgáltatás központi költségvetési szervnek</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>✅ 87. § – Mentesség a termék értékesítésekor</strong>
+</div>
+<div class="data-item">
+<div class="data-value">Mentes, ha a terméket korábban kizárólag adómentes tevékenységhez használták, és ahhoz adólevonási jog nem kapcsolódott.</div>
+</div>
+</div>
+<!-- Arányosítási kalkulátor -->
+<div style="background: linear-gradient(135deg, #A0714F 0%, #7A4F2E 100%); padding: 18px; border-radius: 10px; margin: 10px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 12px;">🧮 Alanyi mentes keret arányosítási kalkulátor</div>
+<div style="color: rgba(255,255,255,0.85); font-size: 0.85em; margin-bottom: 10px;">Év közben induló vállalkozás esetén a 20M Ft-os keret arányos része jár: 20 000 000 / 365 × aktív napok</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+<label style="color: white; font-size: 0.9em; white-space: nowrap;">Vállalkozás indulási napja:</label>
+<input type="date" id="afa-indulas-dátum"
+style="padding: 8px 12px; border: none; border-radius: 6px; font-size: 1em; flex: 1; min-width: 180px; max-width: 220px;"
+min="2026-01-01" max="2026-12-31"
+onchange="számolÁFA()" oninput="számolÁFA()">
+</div>
+<div id="afa-eredmeny" style="margin-top: 14px; display: none;">
+<div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 12px;">
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 4px;" id="afa-napok-text"></div>
+<div style="color: white; font-size: 1.4em; font-weight: bold;" id="afa-keret-value"></div>
+<div style="color: rgba(255,255,255,0.7); font-size: 0.8em; margin-top: 4px;" id="afa-képlet-text"></div>
+</div>
+</div>
+</div>
+
+<!-- Fordított ÁFA -->
+<h3 style="color: #2196F3; margin: 25px 0 12px 0; font-size: 1.1em;">🔄 Fordított ÁFA</h3>
+<div class="alert-box" style="background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%); border-left: 4px solid #2196F3;">
+<strong style="color: #1565C0;">📋 ÁFA fizetés fordított adózás esetén</strong>
+</div>
+<div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin: 12px 0;">
+<p style="margin-bottom: 12px; line-height: 1.6;">
+Fordított adózás esetén a fizetendő adó megállapításának időpontjára speciális szabályok vonatkoznak.
+</p>
+<p style="margin-bottom: 12px; line-height: 1.6;">
+Az ÁFA törvény három időpontot határoz meg. A három közül pedig az lesz a mérvadó, <strong>amelyik a leghamarabb következik be.</strong>
+</p>
+<div class="alert-box" style="margin-top: 14px;">
+<strong>⚠️ Ha fordított adózás alá esik az ügylet, akkor főszabályként a fizetendő adót:</strong>
+</div>
+<div style="background: white; padding: 14px; border-radius: 8px; margin-top: 10px;">
+<ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
+<li><strong>a számla kézhezvétele,</strong></li>
+<li><strong>az ellenérték megtérítése,</strong></li>
+<li><strong>vagy a teljesítést követő hó 15. napja</strong></li>
+</ul>
+<div style="margin-top: 12px; padding: 12px; background: #E3F2FD; border-radius: 6px; text-align: center; font-weight: bold; color: #1565C0;">
+közül a legkorábbi időpontban kell megállapítani
+</div>
+</div>
+</div>
+
+<!-- Helyesbítő számla -->
+<h3 style="color: #2196F3; margin: 25px 0 12px 0; font-size: 1.1em;">📝 Helyesbítő számla ÁFA bevallásban</h3>
+<div class="data-item" style="cursor: pointer; background: #e3f2fd; border-left: 4px solid #2196f3;" onclick="event.stopPropagation(); toggleSubSection('helyesbito-szamla')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>📋 Helyesbítő számla - mikor kerül a bevallásba?</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz</div>
+</div>
+<div id="helyesbito-szamla" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+
+<div class="alert-box" style="background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%); border-left: 4px solid #f44336;">
+<strong>📉 Levonható adó CSÖKKEN (adófizetési kötelezettség nő)</strong>
+</div>
+<div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+<div style="font-weight: bold; margin-bottom: 10px; color: #f44336;">Kötelező időpont:</div>
+<ul style="margin: 0 0 10px 20px; line-height: 1.8;">
+<li><strong>Általános eset:</strong> a helyesbítő számla kézhezvételének hónapja</li>
+<li><strong>Legkésőbb:</strong> a helyesbítő számla kibocsátásának hónapját követő hó 15. napja</li>
+</ul>
+<div style="background: #FFEBEE; padding: 12px; border-radius: 6px; margin-top: 10px;">
+<strong>⚠️ Fontos:</strong><br>
+• Nincs szükség önellenőrzésre<br>
+• Az áfabevallás <strong>31. sorába</strong> kell szerepeltetni
+</div>
+</div>
+
+<div class="alert-box" style="background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%); border-left: 4px solid #4CAF50; margin-top: 15px;">
+<strong>📈 Levonható adó NŐ (több adó vonható le)</strong>
+</div>
+<div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+<div style="font-weight: bold; margin-bottom: 10px; color: #4CAF50;">Legkorábbi időpont:</div>
+<ul style="margin: 0 0 10px 20px; line-height: 1.8;">
+<li>A helyesbítő számla kézhezvételének hónapja</li>
+</ul>
+<div style="background: #E8F5E9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+<strong>✅ Szabályok:</strong><br>
+• Nincs kötelező azonnali bevallás<br>
+• A kétéves elévülési határidőn belül bármikor figyelembe vehető<br>
+• Az áfabevallás megfelelő soraiba kerül (nem kötelezően a 31. sor)
+</div>
+</div>
+
+<div class="alert-box" style="margin-top: 15px;">
+<strong>⚖️ Jogi alapok:</strong><br>
+• Áfatörvény 153/C § (1)-(2) bekezdés<br>
+• Áfabevallás kitöltési útmutató
+</div>
+
+<div style="background: #E3F2FD; padding: 12px; border-radius: 8px; margin-top: 15px; text-align: center;">
+<strong>Egyszerűen:</strong> Mínuszos helyesbítés (adó csökken) → kötelező gyorsan, 31. sor.<br>
+Pluszos helyesbítés (adó nő) → választható időpont, 2 éven belül.
+</div>
+
+</div>
+</div>
+</div>
+<!-- Iparűzési adó -->
+<div class="category-card card-tarsasag" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🏭</span> Helyi iparűzési adó (HIPA)</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>📋 A helyi adók rendszerében az önkormányzatok által a leginkább állandó jelleggel alkalmazott közteher.</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Adókötelezettség</div>
+<div class="data-value">Székhely vagy telephely alapján</div>
+<div class="data-note">Helyi iparűzési adót köteles fizetni az a vállalkozó, akinek a székhelye vagy a telephelye az adott önkormányzat területén található, és ott vállalkozási (iparűzési) tevékenységet folytat részben vagy egészben.</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adóköteles tevékenység</div>
+<div class="data-value">Nyereség-, ill. jövedelemszerzésre irányuló</div>
+<div class="data-note">A vállalkozó által ilyen minőségben végzett nyereség-, illetőleg jövedelemszerzésre irányuló tevékenysége.</div>
+</div>
+<div class="data-item" style="cursor: pointer; background: #e3f2fd; border-left: 4px solid #2196f3;" onclick="event.stopPropagation(); toggleSubSection('hipa-adoalap')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>📊 Adóalap számítása és levonási korlátok</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz</div>
+</div>
+<div id="hipa-adoalap" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+<div class="alert-box">
+<strong>📋 Az iparűzési tevékenység esetén az adó alapjának levezetése:</strong>
+</div>
+<div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0;">
+<div style="font-weight: bold; margin-bottom: 10px;">+ Nettó árbevétel</div>
+<div style="margin-left: 20px; margin-bottom: 5px;">- Eladott áruk beszerzési értéke és közvetített szolgáltatások</div>
+<div style="margin-left: 20px; margin-bottom: 5px;">- Alvállalkozói teljesítések</div>
+<div style="margin-left: 20px; margin-bottom: 5px;">- Alapanyagköltség</div>
+<div style="margin-left: 20px; margin-bottom: 10px;">- Alapkutatás, alkalmazott kutatás, kísérleti fejlesztés elszámolt közvetlen költsége</div>
+<div style="font-weight: bold; border-top: 2px solid #667eea; padding-top: 10px; color: #667eea;">= Adóalap</div>
+</div>
+<div class="alert-box">
+<strong>⚠️ Több telephely esetén:</strong> Ha a vállalkozás több településen rendelkezik telephellyel, akkor az iparűzési adó alapját - a törvényi előírásoknak megfelelően - meg kell osztania a települések között.
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>📊 Eladott áruk beszerzési érték és közvetített szolgáltatások levonhatóságának korlátja:</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Nettó árbevétel sávok</th>
+<th>Levonható összeg %-a</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 – 500 millió Ft meg nem haladó</td>
+<td><strong>100%</strong></td>
+</tr>
+<tr>
+<td>500 millió Ft – 20 milliárd Ft meg nem haladó</td>
+<td><strong>85%</strong></td>
+</tr>
+<tr>
+<td>20 milliárd Ft – 80 milliárd Ft meg nem haladó</td>
+<td><strong>75%</strong></td>
+</tr>
+<tr>
+<td>80 milliárd Ft meghaladó</td>
+<td><strong>70%</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adó maximális mértéke</div>
+<div class="data-value">Az adóalap 2%-a</div>
+<div class="data-note">Az önkormányzatok saját döntésük alapján eltérhetnek ettől. Az önkormányzatok által bevezetett összes helyi adóról a Magyar Államkincstár vezet nyilvántartást.</div>
+</div>
+<div class="alert-box">
+<strong>📅 Bevallási és fizetési határidők:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Helyi iparűzésiadó-előleg</div>
+<div class="data-value">Március 15. és Szeptember 15.</div>
+<div class="data-note">Évente kétszer kell megfizetni</div>
+</div>
+<div class="data-item">
+<div class="data-label">Helyi iparűzésiadó bevallás és adó megfizetése</div>
+<div class="data-value">Május 31.</div>
+<div class="data-note">Az adóévet követő év május 31-ig</div>
+</div>
+<div class="data-item" style="cursor: pointer; background: #fff3cd; border-left: 4px solid #ffc107;" onclick="event.stopPropagation(); toggleSubSection('egyszerusitett-ipa')">
+<div class="data-label" style="display: flex; justify-content: space-between; align-items: center;">
+<span>🆕 Egyszerűsített Iparűzési adó (IPA) - 2023.01.01-től</span>
+<span style="font-size: 1.5em;">▼</span>
+</div>
+<div class="data-note">Kattints a kibontáshoz (max 25M Ft éves bevétel esetén)</div>
+</div>
+<div id="egyszerusitett-ipa" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+<div class="alert-box">
+<strong>🆕 2023.01.01-től új lehetőség!</strong><br>
+A kisvállalkozóknak lehetőségük van választani egy új, egyszerűsített adóalap szerinti adózást, melynek feltétele, hogy az éves bevétel nem haladhatja meg a 25 000 000 Ft-ot.
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>📊 Az adóévi bevétel nagyságától függően az iparűzési adó sávosan differenciált:</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Bevételi határok</th>
+<th>Adóalap</th>
+<th>Adó (max 2%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0 < 12 000 000 Ft</td>
+<td>2 500 000 Ft</td>
+<td><strong>50 000 Ft</strong></td>
+</tr>
+<tr>
+<td>12 000 000 < 18 000 000 Ft</td>
+<td>6 000 000 Ft</td>
+<td><strong>120 000 Ft</strong></td>
+</tr>
+<tr>
+<td>18 000 000 < 25 000 000 Ft</td>
+<td>8 500 000 Ft</td>
+<td><strong>170 000 Ft</strong></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>✅ Egyszerűsítés:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Adóbevallás</div>
+<div class="data-value">Csak eltérés esetén</div>
+<div class="data-note">Adóbevallást csak akkor kell benyújtani, ha az előző évi bevételi sávhoz képest eltérés van</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adófizetési kötelezettség</div>
+<div class="data-value">Évente egyszer</div>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>📋 A választás szabályai:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Választás időtartama</div>
+<div class="data-value">Teljes adóévre</div>
+<div class="data-note">A vállalkozó erre irányuló döntése addig marad érvényben, amíg vissza nem vonja.</div>
+</div>
+<div class="data-item">
+<div class="data-label">Telephely szerinti szabály</div>
+<div class="data-value">Minden telephelyre külön</div>
+<div class="data-note">A fizetendő adó a székhelye és az összes telephelye vonatkozásában külön-külön kerül megállapításra, telephelyenként nem lehet eltérő módszert választani.<br>
+⚠️ Azoknak a kis bevételű vállalkozóknak, akinek több településen van telephelye, nem biztos, hogy megéri ezt választani.</div>
+</div>
+<div class="alert-box" style="margin-top: 15px;">
+<strong>🚫 A megszűnés szabályai:</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Önkéntes megszüntetés</div>
+<div class="data-value">Május 31-ig bejelenteni</div>
+<div class="data-note">Ha a vállalkozó nem kívánja tovább alkalmazni a tételes adóalap-megállapítási módszert, úgy az erre irányuló bejelentését a bevallás benyújtásáig teheti meg (05.31), de ezzel egyidejűleg más módszer alapján kell teljesítenie kötelezettségét az adóév egészére nézve!</div>
+</div>
+<div class="data-item">
+<div class="data-label">Értékhatár túllépés miatti megszűnés</div>
+<div class="data-value">2 évig nem választható</div>
+<div class="data-note">A bevételi értékhatár (25M Ft) átlépése miatt az érintett adóév és a következő adóév vonatkozásában nem alkalmazhatja ezt a módszert.</div>
+</div>
+</div>
+<!-- HIPA záróbevallás kalkulátor -->
+<div style="background: linear-gradient(135deg, #3B6BA5 0%, #2d5380 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 12px;">📅 EV szünetelés – HIPA záróbevallás határidő számító</div>
+<div style="color: rgba(255,255,255,0.85); font-size: 0.85em; margin-bottom: 10px;">A szünetelés kezdőnapjától számított 180. napra vonatkozóan kell HIPA záróbevallást beadni</div>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+<label style="color: white; font-size: 0.9em; white-space: nowrap;">Szünetelés kezdőnapja:</label>
+<input type="date" id="hipa-szuneteles-datum"
+style="padding: 8px 12px; border: none; border-radius: 6px; font-size: 1em; flex: 1; min-width: 180px; max-width: 220px;"
+onchange="számolHIPA()" oninput="számolHIPA()">
+</div>
+<div id="hipa-eredmeny" style="margin-top: 14px; display: none;">
+<div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 12px;">
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 4px;" id="hipa-szoveg"></div>
+<div style="color: white; font-size: 1.4em; font-weight: bold;" id="hipa-hatarido"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Cégautóadó -->
+<div class="category-card card-tarsasag" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🚗</span> Cégautóadó</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>🚗 Cégautóadó (havi összegek):</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Teljesítmény (kW)</th>
+<th>"0"-"4" környezetvédelmi</th>
+<th>"5", "14-15" környezetvédelmi</th>
+<th>"6"-"10" környezetvédelmi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0-50</td>
+<td>38 500 Ft/hó</td>
+<td>20 000 Ft/hó</td>
+<td>17 500 Ft/hó</td>
+</tr>
+<tr>
+<td>51-90</td>
+<td>51 000 Ft/hó</td>
+<td>25 000 Ft/hó</td>
+<td>20 000 Ft/hó</td>
+</tr>
+<tr>
+<td>91-120</td>
+<td>76 000 Ft/hó</td>
+<td>51 000 Ft/hó</td>
+<td>25 000 Ft/hó</td>
+</tr>
+<tr>
+<td>120 felett</td>
+<td>101 000 Ft/hó</td>
+<td>76 000 Ft/hó</td>
+<td>51 000 Ft/hó</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- CÉGAUTÓADÓ KALKULATOR -->
+<div style="background: linear-gradient(135deg, #10B981 0%, #059669 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">🚗 Cégautóadó kalkulátor</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Adja meg a gépjármű teljesítményét és környezetvédelmi osztályát</div>
+<!-- Teljesítmény input -->
+<div style="display: flex; flex-direction: column; gap: 12px;">
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Teljesítmény (kW)</label>
+<input type="number" id="cegauto-kw" min="0" step="1" placeholder="pl. 85"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.05em; margin-top: 3px;"
+oninput="cegautoSzámol()">
+</div>
+<!-- Környezetvédelmi osztály választó -->
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em; display: block; margin-bottom: 6px;">Környezetvédelmi osztály</label>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;">
+<button id="cegauto-btn-0-4" onclick="cegautoSetKorny('0-4')"
+style="flex: 1; min-width: 110px; padding: 7px; border: 2px solid white; border-radius: 6px; background: white; color: #10B981; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+"0"-"4"
+</button>
+<button id="cegauto-btn-5" onclick="cegautoSetKorny('5')"
+style="flex: 1; min-width: 110px; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+"5", "14-15"
+</button>
+<button id="cegauto-btn-6-10" onclick="cegautoSetKorny('6-10')"
+style="flex: 1; min-width: 110px; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+"6"-"10"
+</button>
+</div>
+</div>
+</div>
+<!-- Eredmény -->
+<div style="margin-top: 14px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 14px;">
+<div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+<div style="flex: 1; min-width: 140px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-bottom: 2px;">Éves adó</div>
+<div id="cegauto-eves" style="color: white; font-size: 1.4em; font-weight: bold;">0 Ft</div>
+</div>
+<div style="flex: 1; min-width: 140px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-bottom: 2px;">Havi adó</div>
+<div id="cegauto-havi" style="color: white; font-size: 1.4em; font-weight: bold;">0 Ft</div>
+</div>
+</div>
+<div style="color: rgba(255,255,255,0.6); font-size: 0.75em; margin-top: 8px; text-align: center;">
+Teljesítmény kategória: <span id="cegauto-kategoria" style="font-weight: bold;">-</span>
+</div>
+</div>
+</div>
+<!-- CÉGAUTÓADÓ KALKULATOR VÉGE -->
+<!-- 500 KM KÖLTSÉGELSZÁMOLÁS KALKULATOR -->
+<div style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">📊 500 km költségelszámolás (Egyéni vállalkozó)</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Havi 500 km átalány elszámolása útnyilvántartás nélkül, cégautóadó-mentesen</div>
+<!-- Üzemanyag típus választó -->
+<div style="margin-bottom: 12px;">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em; display: block; margin-bottom: 6px;">Üzemanyag típus (2025-ös NAV árak)</label>
+<div style="display: flex; gap: 8px;">
+<button id="km500-btn-benzin" onclick="km500SetUzemanyag('benzin')"
+style="flex: 1; padding: 7px; border: 2px solid white; border-radius: 6px; background: white; color: #F59E0B; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+Benzin (ESZ-95)
+</button>
+<button id="km500-btn-gazolaj" onclick="km500SetUzemanyag('gazolaj')"
+style="flex: 1; padding: 7px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.85em; cursor: pointer;">
+Gázolaj
+</button>
+</div>
+</div>
+<!-- Hengerűrtartalom -->
+<div style="margin-bottom: 12px;">
+<label style="color: rgba(255,255,255,0.85); font-size: 0.8em;">Hengerűrtartalom (cm³)</label>
+<input type="number" id="km500-henger" min="0" step="1" placeholder="pl. 1598"
+style="width: 100%; padding: 8px 10px; border: none; border-radius: 6px; font-size: 1.05em; margin-top: 3px;"
+oninput="km500Számol()">
+</div>
+<!-- Fogyasztási norma (automatikus) -->
+<div style="margin-bottom: 14px; padding: 10px; background: rgba(255,255,255,0.15); border-radius: 6px;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-bottom: 3px;">NAV szerinti fogyasztási norma</div>
+<div id="km500-fogyasztas-display" style="color: white; font-size: 1.2em; font-weight: bold;">— l/100km</div>
+</div>
+<!-- Havi üzemanyagárak -->
+<div style="color: rgba(255,255,255,0.85); font-size: 0.8em; margin-bottom: 8px; font-weight: bold;">NAV havi üzemanyagárak (Ft/liter)</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 14px;">
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Január</label>
+<input type="number" id="km500-ar-1" min="0" step="1" placeholder="626"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Február</label>
+<input type="number" id="km500-ar-2" min="0" step="1" placeholder="631"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Március</label>
+<input type="number" id="km500-ar-3" min="0" step="1" placeholder="638"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Április</label>
+<input type="number" id="km500-ar-4" min="0" step="1" placeholder="624"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Május</label>
+<input type="number" id="km500-ar-5" min="0" step="1" placeholder="612"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Június</label>
+<input type="number" id="km500-ar-6" min="0" step="1" placeholder="594"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Július</label>
+<input type="number" id="km500-ar-7" min="0" step="1" placeholder="592"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Augusztus</label>
+<input type="number" id="km500-ar-8" min="0" step="1" placeholder="596"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Szeptember</label>
+<input type="number" id="km500-ar-9" min="0" step="1" placeholder="590"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Október</label>
+<input type="number" id="km500-ar-10" min="0" step="1" placeholder="593"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">November</label>
+<input type="number" id="km500-ar-11" min="0" step="1" placeholder="591"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.7); font-size: 0.75em;">December</label>
+<input type="number" id="km500-ar-12" min="0" step="1" placeholder="580"
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.95em; margin-top: 2px;"
+oninput="km500Számol()">
+</div>
+</div>
+<!-- Eredmény -->
+<div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 14px;">
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.85em;">Üzemanyag költség (éves)</div>
+<div id="km500-uzemanyag-eves" style="color: white; font-size: 1.1em; font-weight: bold;">0 Ft</div>
+</div>
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.85em;">Fenntartási költség (12 hó × 7.500 Ft)</div>
+<div style="color: white; font-size: 1.1em; font-weight: bold;">90 000 Ft</div>
+</div>
+<div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 8px; margin-top: 4px; display: flex; justify-content: space-between; align-items: center;">
+<div style="color: rgba(255,255,255,0.85); font-size: 1em; font-weight: bold;">ÉVES ÖSSZESEN</div>
+<div id="km500-eves-ossz" style="color: white; font-size: 1.5em; font-weight: bold;">0 Ft</div>
+</div>
+</div>
+<div style="color: rgba(255,255,255,0.6); font-size: 0.75em; margin-top: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+⚠️ Ez az elszámolási mód teljes évre kötelező. Nem kell útnyilvántartást vezetni és cégautóadót fizetni. 500 km felett már útnyilvántartás és cégautóadó szükséges.
+</div>
+</div>
+</div>
+<!-- 500 KM KÖLTSÉGELSZÁMOLÁS KALKULATOR VÉGE -->
+</div>
+</div>
+<!-- Számvitel -->
+<div class="category-card card-tarsasag" onclick="toggleCategory(this)">
+<h2><span class="category-icon">📒</span> Számvitel</h2>
+<div class="category-content">
+<!-- Elhatárolás -->
+<h3 style="color: #8B5CF6; margin: 15px 0 10px 0; font-size: 1.1em;">📅 Elhatárolás</h3>
+<!-- Elhatárolás kalkulátor -->
+<div style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">📅 Elhatárolás kalkulátor</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Aktív/passzív időbeli elhatárolás számítása számlák alapján</div>
+
+<!-- Számla típus választó -->
+<div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+<div style="color: white; font-weight: bold; font-size: 0.9em; margin-bottom: 8px;">Számla típusa</div>
+<div style="display: flex; gap: 8px;">
+<button id="elh-btn-koltseg" onclick="elhatárolSetTipus('koltseg')"
+style="flex: 1; padding: 8px; border: 2px solid white; border-radius: 6px; background: white; color: #8B5CF6; font-weight: bold; font-size: 0.9em; cursor: pointer;">
+💳 Költség számla
+</button>
+<button id="elh-btn-bevetel" onclick="elhatárolSetTipus('bevetel')"
+style="flex: 1; padding: 8px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.9em; cursor: pointer;">
+💰 Bevétel számla
+</button>
+</div>
+</div>
+
+<!-- Számla adatok -->
+<div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+<div style="color: white; font-weight: bold; font-size: 0.9em; margin-bottom: 10px;">Számla adatok</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px;">
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.75em;">Számla kelte</label>
+<input type="date" id="elh-szamla-kelte" 
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.9em; margin-top: 2px;"
+onchange="elhatárolSzámol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.75em;">Teljesítés kezdete</label>
+<input type="date" id="elh-telj-kezd" 
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.9em; margin-top: 2px;"
+onchange="elhatárolSzámol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.75em;">Teljesítés vége</label>
+<input type="date" id="elh-telj-veg" 
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.9em; margin-top: 2px;"
+onchange="elhatárolSzámol()">
+</div>
+<div>
+<label style="color: rgba(255,255,255,0.85); font-size: 0.75em;">ÁFA teljesítés</label>
+<input type="date" id="elh-afa-telj" 
+style="width: 100%; padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.9em; margin-top: 2px;"
+onchange="elhatárolSzámol()">
+</div>
+</div>
+</div>
+
+<!-- Eredmény -->
+<div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 14px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+<div style="color: rgba(255,255,255,0.85); font-size: 0.9em; font-weight: bold;">Melyik évben könyveljük?</div>
+<div id="elh-ev" style="color: white; font-size: 1.3em; font-weight: bold;">—</div>
+</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+<div style="background: rgba(76, 175, 80, 0.3); padding: 10px; border-radius: 6px; text-align: center;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-bottom: 4px;">Aktív időbeli elhatárolás</div>
+<div id="elh-aktiv" style="color: #4CAF50; font-size: 1em; font-weight: bold;">—</div>
+<div style="color: rgba(255,255,255,0.6); font-size: 0.7em; margin-top: 2px;">39 – eredmény nő</div>
+</div>
+<div style="background: rgba(156, 39, 176, 0.3); padding: 10px; border-radius: 6px; text-align: center;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-bottom: 4px;">Passzív időbeli elhatárolás</div>
+<div id="elh-passziv" style="color: #CE93D8; font-size: 1em; font-weight: bold;">—</div>
+<div style="color: rgba(255,255,255,0.6); font-size: 0.7em; margin-top: 2px;">48 – eredmény csökken</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Elhatárolási szabályok táblázat -->
+<div style="background: rgba(139,92,246,0.1); padding: 14px; border-radius: 8px; margin: 15px 0;">
+<div style="color: #8B5CF6; font-weight: bold; font-size: 0.95em; margin-bottom: 10px;">📋 Elhatárolási szabályok (2025-2026)</div>
+<div style="overflow-x: auto;">
+<table style="width: 100%; border-collapse: collapse; font-size: 0.8em;">
+<thead>
+<tr style="background: #8B5CF6; color: white;">
+<th style="padding: 8px; text-align: left; border: 1px solid rgba(139,92,246,0.3);">Számla típusa</th>
+<th style="padding: 8px; text-align: center; border: 1px solid rgba(139,92,246,0.3);">Dátumok</th>
+<th style="padding: 8px; text-align: center; border: 1px solid rgba(139,92,246,0.3);">2025</th>
+<th style="padding: 8px; text-align: center; border: 1px solid rgba(139,92,246,0.3);">2026</th>
+<th style="padding: 8px; text-align: center; border: 1px solid rgba(139,92,246,0.3);">Aktív (39)</th>
+<th style="padding: 8px; text-align: center; border: 1px solid rgba(139,92,246,0.3);">Passzív (48)</th>
+</tr>
+</thead>
+<tbody>
+<tr style="background: white;">
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); font-weight: 600;">Számla kelte</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2);">
+2026.01.08<br>
+<span style="font-size: 0.85em; color: #666;">Telj.: 2025.12.31<br>ÁFA: 2026.01.08</span>
+</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #F8BBD0; text-align: center; font-weight: bold;">csak az ÁFA</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+</tr>
+<tr style="background: #F3F4F6;">
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); font-weight: 600;">Számla kelte</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2);">
+2026.01.08<br>
+<span style="font-size: 0.85em; color: #666;">Időszak: 2025.12.01–2025.12.31<br>ÁFA: 2026.01.08</span>
+</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #F8BBD0; text-align: center; font-weight: bold;">csak az ÁFA</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+</tr>
+<tr style="background: white;">
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); font-weight: 600;">Költség számla</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2);">
+Kelte: 2025.12.10<br>
+<span style="font-size: 0.85em; color: #666;">Időszak: 2025.12.10–2026.01.09<br>ÁFA: 2025.12.10</span>
+</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #F8BBD0; text-align: center; font-weight: bold;">CSAK a 2026-ra eső rész</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+</tr>
+<tr style="background: #F3F4F6;">
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); font-weight: 600;">Költség számla</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2);">
+Kelte: 2026.02.04<br>
+<span style="font-size: 0.85em; color: #666;">Időszak: 2025.12.10–2026.01.09<br>ÁFA: 2026.02.12</span>
+</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #F8BBD0; text-align: center; font-weight: bold;">CSAK a 2025-re eső rész</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+</tr>
+<tr style="background: white;">
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); font-weight: 600;">Bevétel számla</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2);">
+Kelte: 2025.12.10<br>
+<span style="font-size: 0.85em; color: #666;">Időszak: 2025.12.10–2026.01.09<br>ÁFA: 2025.12.10</span>
+</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #F8BBD0; text-align: center; font-weight: bold;">CSAK a 2026-ra eső rész</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+</tr>
+<tr style="background: #F3F4F6;">
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); font-weight: 600;">Bevétel számla</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2);">
+Kelte: 2026.02.04<br>
+<span style="font-size: 0.85em; color: #666;">Időszak: 2025.12.10–2026.01.09<br>ÁFA: 2026.02.12</span>
+</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #F8BBD0; text-align: center; font-weight: bold;">CSAK a 2025-re eső rész</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #C8E6C9; text-align: center; font-weight: bold;">IGEN</td>
+<td style="padding: 6px; border: 1px solid rgba(139,92,246,0.2); background: #FFCDD2; text-align: center; font-weight: bold;">NEM</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div style="color: #666; font-size: 0.75em; margin-top: 8px; padding: 8px; background: white; border-radius: 4px;">
+<strong>Magyarázat:</strong><br>
+• <strong>Aktív időbeli elhatárolás (39):</strong> Előre fizetett költség → eredmény nő (T391 K9, T392 K5 vagy 8)<br>
+• <strong>Passzív időbeli elhatárolás (48):</strong> Halasztott bevétel → eredmény csökken (T9 K481, T5 vagy 8 K482)
+</div>
+</div>
+</div>
+</div>
+
+<!-- SZJA és Adók -->
+<div class="category-card card-alap" onclick="toggleCategory(this)">
+<h2><span class="category-icon">📋</span> SZJA & Általános adók</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">SZJA</div>
+<div class="data-value">15%</div>
+</div>
+<div class="data-item">
+<div class="data-label">Társadalombiztosítási járulék</div>
+<div class="data-value">18,5%</div>
+</div>
+<div class="data-item">
+<div class="data-label">Nyugdíjjárulék (pl. GYED, GYES)</div>
+<div class="data-value">10%</div>
+</div>
+<div class="data-item">
+<div class="data-label">Szociális hozzájárulási adó (szocho)</div>
+<div class="data-value">13%</div>
+</div>
+<div class="alert-box">
+<strong>⚠️ Szocho felső határ:</strong> 7 747 200 Ft/év
+</div>
+<div class="data-item">
+<div class="data-label">Személyi kedvezmény</div>
+<div class="data-value">Teljes adóalap × 15%</div>
+<div class="data-note">Max/hó: 715 765 Ft (max adókedvezmény: 107 365 Ft)</div>
+</div>
+<div class="data-item">
+<div class="data-label">Adómentes munkabér előleg (max)</div>
+<div class="data-value">38 700 Ft</div>
+</div>
+</div>
+</div>
+<!-- Családi kedvezmények -->
+<div class="category-card card-alap" onclick="toggleCategory(this)">
+<h2><span class="category-icon">👨‍👩‍👧‍👦</span> Családi kedvezmények</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>📋 SZJA kedvezmények érvényesíthetőségi sorrendben:</strong><br>
+1. Személyi kedvezmény<br>
+2. Első házasok kedvezménye<br>
+3. Családi kedvezmény (gyerekenként)<br>
+4. 25 év alatti fiatalok kedvezménye<br>
+5. 30 év alatti anyák kedvezménye<br>
+6. 2, 3, 4 vagy több gyermeket nevelő anyák<br>
+7. CSED, GYED, ÖFD kedvezménye
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Gyermekek száma</th>
+<th>Havi kedvezmény (Ft)</th>
+<th>Adókedvezmény</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 gyerek</td>
+<td><strong>133 340 Ft</strong></td>
+<td>20 000 Ft</td>
+</tr>
+<tr>
+<td>2 gyerek</td>
+<td><strong>266 660 Ft</strong></td>
+<td>39 999 Ft</td>
+</tr>
+<tr>
+<td>3 vagy több gyerek</td>
+<td><strong>440 000 Ft/fő</strong></td>
+<td>66 000 Ft</td>
+</tr>
+<tr>
+<td>Tartósan beteg gyerek</td>
+<td><strong>133 340 Ft</strong></td>
+<td>20 000 Ft</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="data-item">
+<div class="data-label">Első házasok kedvezménye</div>
+<div class="data-value">Max/hó: 33 335 Ft</div>
+<div class="data-note">Adókedvezmény: 5 000 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">25 év alatti fiatalok kedvezménye</div>
+<div class="data-value">Max/hó: 107 600 Ft</div>
+<div class="data-note">Adókedvezmény: 16 140 Ft (levont SZJA előlegből)</div>
+</div>
+<div class="data-item">
+<div class="data-label">30 év alatti anyák kedvezménye</div>
+<div class="data-value">Max/hó/gyerek: 133 340 Ft</div>
+<div class="data-note">Adókedvezmény: 20 000 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Családi pótlék</div>
+<div class="data-value">12 200-17 000 Ft/gyerek/hó</div>
+<div class="data-note">1 gyermekes család: 12 200 Ft/hó | egyedülálló: 13 700 Ft/hó<br>
+2 gyermekes család: 13 300 Ft/hó | egyedülálló: 14 800 Ft/hó<br>
+3 vagy többgyermekes család: 16 000 Ft/hó | egyedülálló: 17 000 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Tartósan beteg, súlyosan fogyatékos gyermeket nevelő</div>
+<div class="data-value">23 300 Ft/hó (család) | 25 900 Ft/hó (egyedülálló)</div>
+</div>
+<div class="data-item">
+<div class="data-label">Tartósan beteg, súlyosan fogyatékos nagykorú személy</div>
+<div class="data-value">20 300 Ft/hó</div>
+</div>
+</div>
+</div>
+<!-- SZÉP kártya -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🎫</span> SZÉP Kártya</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">SZÉP Kártya rekreációs keretösszeg</div>
+<div class="data-value">450 000 Ft/év (időarányosítani!)</div>
+<div class="data-note">Adó: 1,18 × (15% SZJA + 13% szocho) = 33,04%<br>
+vagy 1,18 × (15% SZJA) + 10% KIVA = 27,70%</div>
+</div>
+<div class="data-item">
+<div class="data-label">Aktív Magyarok alszámla keretösszeg</div>
+<div class="data-value">60 000 Ft/félév</div>
+</div>
+<div class="data-item">
+<div class="data-label">SZÉP - Aktív Magyarok keretösszeg felett</div>
+<div class="data-value">60 000 Ft/félévig időarányosítani</div>
+</div>
+<div class="data-item">
+<div class="data-label">Lakhatási támogatás (35 éves korig)</div>
+<div class="data-value">1 800 000 Ft/év (időarányosítani!)</div>
+</div>
+<div class="alert-box">
+<strong>⚠️ SZÉP Kártya rekreációs keret felett:</strong><br>
+Időarányosítani évi 450 000 Ft-tól<br><br>
+<strong>SZÉP - Aktív Magyarok keretösszeg felett:</strong><br>
+Időarányosítani 60 000 Ft/félévtől<br><br>
+<strong>Lakhatási támogatás 35 éves korig:</strong><br>
+Időarányosítani évi 1 800 000 Ft-tól
+</div>
+</div>
+</div>
+<!-- Adómentes juttatások -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🎁</span> Adómentes juttatások</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">Sportrendezvényre szóló belépő</div>
+<div class="data-value">322 800 Ft/év</div>
+</div>
+<div class="data-item">
+<div class="data-label">Kulturális szolgáltatás belépő/bérlet</div>
+<div class="data-value">322 800 Ft/év</div>
+</div>
+<div class="data-item">
+<div class="data-label">Állatkertbe szóló belépő/bérlet</div>
+<div class="data-value">322 800 Ft/év</div>
+</div>
+<div class="data-item">
+<div class="data-label">Távmunka költségtérítése</div>
+<div class="data-value">Max 32 280 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Óvoda, bölcsődei díj térítése</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Járványügyi szűrővizsgálat</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Járványügyi védőoltás</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Kerékpár használat</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Közösségi autómegosztás</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Diákhitel törlesztése</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Borászati termék juttatása</div>
+<div class="data-value">Teljes összege</div>
+</div>
+<div class="data-item">
+<div class="data-label">Csekély értékű ajándék</div>
+<div class="data-value">3 × 32 280 Ft/év = 96 840 Ft/év</div>
+<div class="data-note">Évente 3 alkalommal, max. a minimálbér 10%-áig</div>
+</div>
+<div class="alert-box">
+<strong>📋 Béren kívüli juttatás:</strong> Adó: 15% SZJA + 13% szocho vagy 10% KIVA<br>
+<strong>Néhány egyes meghatározott juttatás:</strong> Adó: 33,4% vagy KIVA-s 27,7%
+</div>
+</div>
+</div>
+<!-- Ellátások -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🏥</span> Ellátások & Juttatások</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">Táppénz</div>
+<div class="data-value">Napi alap 60% vagy 50%</div>
+<div class="data-note">Max: 21 520 Ft/nap (minimálbér 2×-ének 30-ad része)<br>
+50% feltétele:<br>
+• 730 napnál kevesebb folyamatos biztosítási idő<br>
+• nem kórházi ellátás</div>
+</div>
+<div class="data-item">
+<div class="data-label">CSED (Csecsemőgondozási díj)</div>
+<div class="data-value">Napi jövedelem 100%</div>
+<div class="data-note">Nincs maximuma</div>
+</div>
+<div class="data-item">
+<div class="data-label">GYED (Gyermekgondozási díj)</div>
+<div class="data-value">Napi alap 70%</div>
+<div class="data-note">Max: 451 920 Ft/hó (minimálbér 2× 70%-a)</div>
+</div>
+<div class="data-item">
+<div class="data-label">Nagyszülői GYED</div>
+<div class="data-value">Nevelőszülői GYED alapja</div>
+<div class="data-note">Az 1 napra jutó minimálbér 55%-ának (5 918 Ft/nap) a 70%-a = max napi 4 142,60 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Diplomás GYED (alapképzés)</div>
+<div class="data-value">225 960 Ft/hó</div>
+<div class="data-note">Jogosultság kezdetén fennálló minimálbér 70%-a</div>
+</div>
+<div class="data-item">
+<div class="data-label">Diplomás GYED (mesterképzés)</div>
+<div class="data-value">261 240 Ft/hó</div>
+<div class="data-note">Jogosultság kezdetén fennálló garantált bérminimum 70%-a</div>
+</div>
+<div class="data-item">
+<div class="data-label">Örökbefogadói díj</div>
+<div class="data-value">Napi alap 70%</div>
+<div class="data-note">Max: 451 920 Ft/hó (minimálbér 2× 70%-a)</div>
+</div>
+<div class="data-item">
+<div class="data-label">GYES (Gyermekgondozási segély)</div>
+<div class="data-value">28 500 Ft/hó</div>
+<div class="data-note">-10% nyugdíjjárulék, gyermek 3 éves koráig</div>
+</div>
+<div class="data-item">
+<div class="data-label">GYET (Gyermeknevelési támogatás)</div>
+<div class="data-value">28 500 Ft/hó</div>
+<div class="data-note">Ikergyermekek esetén a tankötelessé válás évének végéig<br>
+Tartósan beteg vagy fogyatékos gyermek után 10 éves koráig</div>
+</div>
+<div class="data-item">
+<div class="data-label">GYOD (Gyermekek otthongondozási díja)</div>
+<div class="data-value">28 500 Ft/hó</div>
+<div class="data-note">Ha össz. 3 vagy több kiskorút nevel, a legfiatalabb 8 éves koráig</div>
+</div>
+<div class="data-item">
+<div class="data-label">Öregségi nyugdíj legkisebb összege</div>
+<div class="data-value">28 500 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Anyasági támogatás</div>
+<div class="data-value">64 125 Ft</div>
+<div class="data-note">Ikreknél: 85 500 Ft</div>
+</div>
+<div class="data-item">
+<div class="data-label">Ápolási díj (100%)</div>
+<div class="data-value">51 760 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Kiemelt ápolási díj (180%)</div>
+<div class="data-value">93 168 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Emelt összegű ápolási díj (150%)</div>
+<div class="data-value">77 640 Ft/hó</div>
+</div>
+<div class="data-item">
+<div class="data-label">Álláskeresési járadék</div>
+<div class="data-value">Társ.bizt.jár.alap 60%, max 28 500 Ft</div>
+<div class="data-note">Ha 3 vagy több kiskorút nevel: minimálbér 100% = 10 760 Ft/nap (a legfiatalabb 8 éves koráig)</div>
+</div>
+<div class="data-item">
+<div class="data-label">Nyugdíj előtti álláskeresési segély</div>
+<div class="data-value">Társ.bizt.jár.alap 40%</div>
+<div class="data-note">Max: minimálbér 40% = 4 304 Ft/nap</div>
+</div>
+<div class="data-item">
+<div class="data-label">Álláskeresést ösztönző juttatás</div>
+<div class="data-value">Legalább a min.bér 70%</div>
+<div class="data-note">Min: 225 960 Ft/hó</div>
+</div>
+</div>
+</div>
+<!-- Szabadság és felmondási idő -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🏖️</span> Szabadság & Felmondási idő</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>📅 Alapszabadság életkor szerint</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Életkor</th>
+<th>Nap</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>14 – 18</td><td>25</td></tr>
+<tr><td>19 – 24</td><td>20</td></tr>
+<tr><td>25 – 27</td><td>21</td></tr>
+<tr><td>28 – 30</td><td>22</td></tr>
+<tr><td>31 – 32</td><td>23</td></tr>
+<tr><td>33 – 34</td><td>24</td></tr>
+<tr><td>35 – 36</td><td>25</td></tr>
+<tr><td>37 – 38</td><td>26</td></tr>
+<tr><td>39 – 40</td><td>27</td></tr>
+<tr><td>41 – 42</td><td>28</td></tr>
+<tr><td>43 – 44</td><td>29</td></tr>
+<tr><td>45 felett</td><td>30</td></tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box">
+<strong>🎁 Pótszabadság</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Jogcím</th>
+<th>Nap</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>1 gyerek</td><td>2</td></tr>
+<tr><td>2 gyerek</td><td>4</td></tr>
+<tr><td>3 vagy több gyerek</td><td>7</td></tr>
+<tr><td>Fogyatékos gyerek</td><td>+2</td></tr>
+<tr><td>Megváltozott munkaképességű</td><td>5</td></tr>
+<tr><td>Földalatti munkavégzés</td><td>5</td></tr>
+<tr><td>Apaszabadság (100% bér)</td><td>5</td></tr>
+<tr><td>Apaszabadság (40% bér)</td><td>5</td></tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box">
+<strong>👶 Szülői szabadság</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Szülői szabadság</div>
+<div class="data-value">Max 44 nap</div>
+<div class="data-note">Feltételek érvényesítendők</div>
+</div>
+<div class="alert-box">
+<strong>⏱️ Felmondási idő a munkaviszony időtartama szerint</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Munkaviszony időtartama</th>
+<th>Felmondási idő</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>0–2,99 év</td><td>30 nap</td></tr>
+<tr><td>3–4,99 év</td><td>35 nap</td></tr>
+<tr><td>5–7,99 év</td><td>45 nap</td></tr>
+<tr><td>8–9,99 év</td><td>50 nap</td></tr>
+<tr><td>10–14,99 év</td><td>55 nap</td></tr>
+<tr><td>15–17,99 év</td><td>60 nap</td></tr>
+<tr><td>18–19,99 év</td><td>70 nap</td></tr>
+<tr><td>20 év vagy több</td><td>90 nap</td></tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box">
+<strong>⚠️ Maximum 6 havi lehet a felmondási idő</strong>
+</div>
+</div>
+</div>
+<!-- Végkielégítés -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">💼</span> Végkielégítés</h2>
+<div class="category-content">
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Munkaviszony időtartama</th>
+<th>Végkielégítés összege</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>3-4 év</td><td>1 havi</td></tr>
+<tr><td>5-9 év</td><td>2 havi</td></tr>
+<tr><td>10-14 év</td><td>3 havi</td></tr>
+<tr><td>15-19 év</td><td>4 havi</td></tr>
+<tr><td>20-24 év</td><td>5 havi</td></tr>
+<tr><td>25 év felett</td><td>6 havi</td></tr>
+</tbody>
+</table>
+</div>
+<div class="data-item">
+<div class="data-label">Nyugdíj előtt max 5 év + 1 hó</div>
+<div class="data-value">Összesen legfeljebb 6 havi</div>
+</div>
+<div class="data-item">
+<div class="data-label">Nyugdíj előtt max 5 év + 2 hó</div>
+<div class="data-value">60% lesz a mértéke</div>
+</div>
+<div class="data-item">
+<div class="data-label">Nyugdíj előtt max 5 év + 3 hó</div>
+<div class="data-value">Speciális szabály</div>
+</div>
+</div>
+</div>
+<!-- Munkaszüneti napok -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">📅</span> Munkaszüneti napok 2026</h2>
+<div class="category-content">
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Dátum</th>
+<th>Munkaszüneti nap</th>
+<th>Áthelyezett munkanap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>01.01.</td>
+<td>Új év napja</td>
+<td>nincs (csütörtök)</td>
+</tr>
+<tr>
+<td>01.02.</td>
+<td>-</td>
+<td>Áthelyezett munkanap 01.02-hoz</td>
+</tr>
+<tr>
+<td>01.10.</td>
+<td>-</td>
+<td>Áthelyezett pihenőnap</td>
+</tr>
+<tr>
+<td>03.15.</td>
+<td>Nemzeti Ünnep</td>
+<td>nincs (vasárnap)</td>
+</tr>
+<tr>
+<td>04.03.</td>
+<td>Nagypéntek</td>
+<td>nincs (péntek)</td>
+</tr>
+<tr>
+<td>04.05.</td>
+<td>Húsvét vasárnap</td>
+<td>nincs (vasárnap)</td>
+</tr>
+<tr>
+<td>04.06.</td>
+<td>Húsvét hétfő</td>
+<td>nincs (hétfő)</td>
+</tr>
+<tr>
+<td>05.01.</td>
+<td>Munka ünnepe</td>
+<td>nincs (péntek)</td>
+</tr>
+<tr>
+<td>05.24.</td>
+<td>Pünkösd vasárnap</td>
+<td>nincs (vasárnap)</td>
+</tr>
+<tr>
+<td>05.25.</td>
+<td>Pünkösd hétfő</td>
+<td>nincs (hétfő)</td>
+</tr>
+<tr>
+<td>08.08.</td>
+<td>-</td>
+<td>Áthelyezett pihenőnap</td>
+</tr>
+<tr>
+<td>08.20.</td>
+<td>Államalapítás</td>
+<td>nincs (csütörtök)</td>
+</tr>
+<tr>
+<td>08.21.</td>
+<td>-</td>
+<td>Áthelyezett munkanap 08.21-hez</td>
+</tr>
+<tr>
+<td>10.23.</td>
+<td>1956-os forradalom</td>
+<td>nincs (péntek)</td>
+</tr>
+<tr>
+<td>11.01.</td>
+<td>Mindenszentek</td>
+<td>nincs (vasárnap)</td>
+</tr>
+<tr>
+<td>12.12.</td>
+<td>-</td>
+<td>Áthelyezett pihenőnap</td>
+</tr>
+<tr>
+<td>12.24.</td>
+<td>-</td>
+<td>Áthelyezett munkanap 12.24-hez</td>
+</tr>
+<tr>
+<td>12.25.</td>
+<td>Karácsony</td>
+<td>nincs (péntek)</td>
+</tr>
+<tr>
+<td>12.26.</td>
+<td>Karácsony</td>
+<td>nincs (szombat)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box">
+<strong>📊 Havi munkanapok száma (munkanap / óra):</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Hónap</th>
+<th>Munkanap</th>
+<th>Óra</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Január</td><td>21</td><td>168</td></tr>
+<tr><td>Február</td><td>20</td><td>160</td></tr>
+<tr><td>Március</td><td>22</td><td>176</td></tr>
+<tr><td>Április</td><td>20</td><td>160</td></tr>
+<tr><td>Május</td><td>19</td><td>152</td></tr>
+<tr><td>Június</td><td>22</td><td>176</td></tr>
+<tr><td>Július</td><td>23</td><td>184</td></tr>
+<tr><td>Augusztus</td><td>20</td><td>160</td></tr>
+<tr><td>Szeptember</td><td>22</td><td>176</td></tr>
+<tr><td>Október</td><td>21</td><td>168</td></tr>
+<tr><td>November</td><td>21</td><td>168</td></tr>
+<tr><td>December</td><td>22</td><td>176</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Jövedelemletiltás -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">⚖️</span> Jövedelemletiltás</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>📅 Változás: 2025.07.01-től</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Mentes a végrehajtás alól</div>
+<div class="data-value">Min.bér nettó összegének 60%-a = 128 797 Ft + családi kedvezmény nettó összege*</div>
+<div class="data-note">* Csak a 2025.07.01 után indult végrehajtás esetén mentes a családi kedvezmény!</div>
+</div>
+<div class="data-item">
+<div class="data-label">Korlátozás nélkül végrehajtás alá vonható</div>
+<div class="data-value">Nettó 200 000 Ft/hó feletti rész</div>
+</div>
+</div>
+</div>
+<!-- EKHO -->
+<div class="category-card card-ev" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🎯</span> EKHO (Egyszerűsített közteher)</h2>
+<div class="category-content">
+<div class="data-item">
+<div class="data-label">EKHO éves bevételi határ (általános)</div>
+<div class="data-value">60 000 000 Ft/év</div>
+</div>
+<div class="alert-box">
+<strong>⚠️ Feltétel:</strong> Legalább éves minimálbért elérő, általános szabály szerint adózó jövedelem (3 873 600 Ft)<br>
+- Összegtől függetlenül biztosított lesz a megbízott
+</div>
+<div class="data-item">
+<div class="data-label">EKHO mérték</div>
+<div class="data-value">15%</div>
+<div class="data-note">Tartós megbízási jogviszony 2026.01.01-től (új fogalom)</div>
+</div>
+</div>
+</div>
+<!-- Egyszerűsített foglalkoztatás -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">⚡</span> Egyszerűsített foglalkoztatás (EFO)</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>👥 1 magánszemély max 120 nap/év</strong><br>
+Max egybefüggő 5 nap | Max. havi 15 nap
+</div>
+<div class="alert-box">
+<strong>📊 EFO - Egyszerűsített foglalkoztatás fajtái (minimálbér %-ában)</strong>
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Foglalkoztatás fajtája</th>
+<th>Min.bér %-a</th>
+<th>Ft/nap</th>
+<th>Megjegyzés</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alkalmi munka</td>
+<td>1,50%</td>
+<td><strong>4 800 Ft</strong></td>
+<td>Vonatkozik rá a járulék</td>
+</tr>
+<tr>
+<td>Turisztikai idénymunka</td>
+<td>0,75%</td>
+<td><strong>2 400 Ft</strong></td>
+<td>-</td>
+</tr>
+<tr>
+<td>Mezőgazd. idénymunka (0-120 nap)</td>
+<td>0,75%</td>
+<td><strong>2 400 Ft</strong></td>
+<td>Előre be kell jelenteni</td>
+</tr>
+<tr>
+<td>Mezőgazd. idénymunka (121-210 nap)</td>
+<td>1,125%</td>
+<td><strong>3 600 Ft</strong></td>
+<td>Foglalkoztató döntésétől függ, ellátás 15%-a</td>
+</tr>
+<tr>
+<td>Filmipari statiszta</td>
+<td>3,00%</td>
+<td><strong>9 700 Ft</strong></td>
+<td>Lehet folyamatosan fennálló megbízás, attól nem kell tartósnak minősíteni</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box">
+<strong>📊 EFO minimális órabér kalkulátor</strong>
+</div>
+
+<!-- EFO ÓRABÉR KALKULÁTOR -->
+<div style="background: linear-gradient(135deg, #26A69A 0%, #00897B 100%); padding: 18px; border-radius: 10px; margin: 15px 0;">
+<div style="color: white; font-weight: bold; font-size: 1.05em; margin-bottom: 4px;">⚡ EFO minimális órabér kalkulátor</div>
+<div style="color: rgba(255,255,255,0.8); font-size: 0.82em; margin-bottom: 14px;">Számítsd ki a napi minimális bruttó bért EFO órabér alapján</div>
+
+<!-- Szakképzettség -->
+<div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+<div style="color: white; font-weight: bold; font-size: 0.9em; margin-bottom: 8px;">Szakképzettség</div>
+<div style="display: flex; gap: 8px;">
+<button id="efo-btn-nem-szakkepzett" onclick="efoSetSzakkepzettseg('nem')"
+style="flex: 1; padding: 10px; border: 2px solid white; border-radius: 6px; background: white; color: #26A69A; font-weight: bold; font-size: 0.9em; cursor: pointer;">
+👤 Nem szakképzett<br>
+<span style="font-size: 0.85em;">1 578 Ft/óra</span>
+</button>
+<button id="efo-btn-szakkepzett" onclick="efoSetSzakkepzettseg('igen')"
+style="flex: 1; padding: 10px; border: 2px solid rgba(255,255,255,0.4); border-radius: 6px; background: transparent; color: white; font-weight: bold; font-size: 0.9em; cursor: pointer;">
+🎓 Szakképzett<br>
+<span style="font-size: 0.85em;">1 866 Ft/óra</span>
+</button>
+</div>
+</div>
+
+<!-- Ledolgozott órák -->
+<div style="background: rgba(255,255,255,0.1); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+<label style="color: white; font-weight: bold; font-size: 0.9em; display: block; margin-bottom: 8px;">Ledolgozott órák száma</label>
+<input type="number" id="efo-orak" min="0.5" max="24" step="0.5" value="8" placeholder="8"
+style="width: 100%; padding: 10px 12px; border: none; border-radius: 6px; font-size: 1.1em; font-weight: bold; text-align: center;"
+oninput="efoSzamol()">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em; margin-top: 6px; text-align: center;">
+Fél órás lépésekkel (0.5, 1, 1.5, 2...)
+</div>
+</div>
+
+<!-- Eredmény -->
+<div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 16px;">
+<div style="text-align: center; margin-bottom: 12px;">
+<div style="color: rgba(255,255,255,0.8); font-size: 0.85em; margin-bottom: 4px;">Minimális órabér</div>
+<div style="color: white; font-size: 1.4em; font-weight: bold;" id="efo-oraber">1 578 Ft/óra</div>
+</div>
+<div style="border-top: 1px solid rgba(255,255,255,0.3); padding-top: 12px;">
+<div style="text-align: center; padding: 14px; background: rgba(255,255,255,0.2); border-radius: 8px;">
+<div style="color: rgba(255,255,255,0.85); font-size: 0.9em; margin-bottom: 6px;">💰 Napi minimális bruttó bér</div>
+<div style="color: #A5D6A7; font-size: 1.8em; font-weight: bold;" id="efo-napi-ber">12 624 Ft</div>
+</div>
+</div>
+</div>
+
+<!-- Infó - EFO közteher -->
+<div style="margin-top: 14px; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 12px;">
+<div style="color: white; font-weight: bold; font-size: 0.85em; margin-bottom: 8px;">📊 EFO napi közterhek (fizetendő):</div>
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+<div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Alkalmi munka</div>
+<div style="color: white; font-weight: bold; font-size: 1.1em;">4 800 Ft/nap</div>
+</div>
+<div style="background: rgba(255,255,255,0.15); padding: 8px; border-radius: 6px; text-align: center;">
+<div style="color: rgba(255,255,255,0.7); font-size: 0.75em;">Mezőgazd./Turisztikai</div>
+<div style="color: white; font-weight: bold; font-size: 1.1em;">2 400 Ft/nap</div>
+</div>
+</div>
+<div style="color: rgba(255,255,255,0.7); font-size: 0.72em; margin-top: 8px; text-align: center;">
+⚠️ A közteher a munkáltatót terheli, független a ledolgozott óráktól
+</div>
+</div>
+</div>
+
+<div class="alert-box">
+<strong>🔍 EFO korlátok és létszámok:</strong><br>
+• Foglalkoztató éves létszámkorlátja (1. és 7. hónap megelőző 6 havi létszám szerint)<br>
+• 300 eFt-ot meghaladó adótartozás: EFO közteher + szocho + rehab.hozzájár. + levont SZJA előleg
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Foglalkoztató létszáma</th>
+<th>Max. létszám/nap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&lt; 1 fő</td>
+<td>1 fő naponta</td>
+</tr>
+<tr>
+<td>1-5 fő</td>
+<td>2 fő naponta</td>
+</tr>
+<tr>
+<td>6-20 fő</td>
+<td>4 fő naponta</td>
+</tr>
+<tr>
+<td>20 fő felett</td>
+<td>létszám × 20%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="alert-box">
+<strong>⚠️ Létszámkorlát NEM vonatkozik:</strong> Szociális szövetkezet, Filmipari statiszta
+</div>
+<div class="alert-box">
+<strong>💰 EFO mentesített keretösszegek (napi bér 130%-a)</strong><br>
+A munkavállalónak nem kell jövedelmet megállapítania és SZJA-bevallást benyújtania, ha a bevétele nem haladja meg a mentesített keretösszeget.
+</div>
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Munkakör típusa</th>
+<th>Mentesített keretösszeg</th>
+<th>Számítás</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Szakképesítést igénylő</td>
+<td><strong>22 308 Ft/nap</strong></td>
+<td>Garantált bérminimum × 130%</td>
+</tr>
+<tr>
+<td>Szakképesítést nem igénylő</td>
+<td><strong>19 305 Ft/nap</strong></td>
+<td>Minimálbér × 130%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="data-item">
+<div class="data-label">Max napi munkabér</div>
+<div class="data-value">29 700 Ft/nap/fő</div>
+<div class="data-note">Az egyszerűsített foglalkoztatás keretében kifizethető maximális napi munkabér</div>
+</div>
+<div class="data-item">
+<div class="data-label">Filmipari statiszta</div>
+<div class="data-value">Mentesített</div>
+<div class="data-note">A filmipari statisztaként végzett alkalmi munka bevétele után nem kell jövedelmet megállapítani és bevallást benyújtani</div>
+</div>
+<div class="alert-box">
+<strong>🆕 Új szabály 2026.01.01-től!</strong><br>
+Tartós megbízási jogviszony új fogalom. Kizárólag mezőgazdasági idénymunka esetén a magánszemély 120 napja + 90 nappal meghosszabbítható.
+</div>
+<div class="data-item">
+<div class="data-label">Filmipari statiszta max. napidíj</div>
+<div class="data-value">38 700 Ft</div>
+<div class="data-note">Minimálbér × 12%, 100 Ft-ra kerekítve</div>
+</div>
+</div>
+</div>
+<!-- Önkéntes pénztárak -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🏦</span> Önkéntes pénztárak</h2>
+<div class="category-content">
+<div class="alert-box">
+<strong>💼 Adómentes juttatás önkéntes pénztárakba</strong>
+</div>
+<div class="data-item">
+<div class="data-label">Önkéntes nyugdíjpénztárba</div>
+<div class="data-value">1 200 000 Ft/év/fő</div>
+</div>
+<div class="data-item">
+<div class="data-label">Önkéntes önsegélyező pénztárba (pl. ÖNYP, GYES)</div>
+<div class="data-value">650 000 Ft/év/fő</div>
+</div>
+<div class="data-item">
+<div class="data-label">Célzott szolgáltatás egészségpénztárba</div>
+<div class="data-value">Korlátozás nélkül</div>
+</div>
+</div>
+</div>
+<!-- Képzőhely juttatások -->
+<div class="category-card card-munkaugyi" onclick="toggleCategory(this)">
+<h2><span class="category-icon">🎓</span> Képzőhely juttatások</h2>
+<div class="category-content">
+<div class="table-container">
+<table>
+<thead>
+<tr>
+<th>Képzőhelyeket érintő</th>
+<th>Összegek</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Szakképzési munkaszerződés alapján kifizethető adómentes összeg</td><td>100 000 – 168 000 Ft</td></tr>
+<tr><td>Hallgatói munkaszerződés szerinti minimális havi díjazás</td><td>209 829 Ft/hó</td></tr>
+<tr><td>Szakirányú oktatás önköltsége</td><td>1 200 000 Ft/év/fő</td></tr>
+<tr><td>Duális képzés alapnormatíva</td><td>650 000 Ft/év/fő</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+function toggleCategory(card) {
+// Desktop popup logika
+if (window.innerWidth >= 769) {
+const content = card.querySelector('.category-content');
+if (content) {
+const overlay = document.getElementById('desktop-popup-overlay');
+const popupContent = document.getElementById('desktop-popup-content');
+
+// MOZGATJUK a tartalmat (nem másoljuk!) - így minden event és változó megmarad
+if (!content._originalParent) {
+content._originalParent = card;
+}
+popupContent.appendChild(content);
+
+// CSS feloldása hogy látható legyen a popup-ban
+content.style.maxHeight = 'none';
+content.style.overflow = 'visible';
+content.style.display = 'block';
+
+// Popup megjelenítése
+overlay.classList.add('show');
+}
+return;
+}
+// Mobil logika (régi működés)
+const isActive = card.classList.contains('active');
+// Close all OTHER cards (not the clicked one)
+document.querySelectorAll('.category-card').forEach(c => {
+if (c !== card) {
+c.classList.remove('active');
+}
+});
+// Toggle current card
+if (isActive) {
+card.classList.remove('active');
+} else {
+card.classList.add('active');
+}
+}
+function closeDesktopPopup() {
+const overlay = document.getElementById('desktop-popup-overlay');
+const popupContent = document.getElementById('desktop-popup-content');
+if (overlay) {
+// Visszamozgatjuk a tartalmat az eredeti helyére
+const content = popupContent.querySelector('.category-content');
+if (content && content._originalParent) {
+// CSS visszaállítása
+content.style.maxHeight = '';
+content.style.overflow = '';
+content.style.display = '';
+// Visszamozgatás
+content._originalParent.appendChild(content);
+}
+overlay.classList.remove('show');
+}
+}
+// ESC billentyű kezelés
+document.addEventListener('keydown', function(e) {
+if (e.key === 'Escape') {
+closeDesktopPopup();
+}
+});
+function quickNav(keyword) {
+const cards = document.querySelectorAll('.category-card');
+for (const card of cards) {
+const h2 = card.querySelector('h2');
+if (h2 && h2.textContent.includes(keyword)) {
+// Close all first
+document.querySelectorAll('.category-card').forEach(c => c.classList.remove('active'));
+// Get card position and scroll with offset for header
+const cardTop = card.getBoundingClientRect().top + window.scrollY - 100;
+window.scrollTo({ top: cardTop, behavior: 'smooth' });
+// Open after scroll animation
+setTimeout(() => {
+card.classList.add('active');
+}, 400);
+break;
+}
+}
+}
+// Megakadályozzuk a tartalom kattintásának bubble-álását a card-ra
+document.querySelectorAll('.category-content').forEach(content => {
+content.addEventListener('click', function(e) {
+e.stopPropagation();
+});
+});
+// --- BÉRKALKULATOR ---
+let bkTárs = 'tao';
+let bkMode = 'brutto'; // 'brutto' vagy 'netto'
+function bérkalkSetMode(mode) {
+bkMode = mode;
+document.getElementById('bk-mode-brutto').style.background = (mode === 'brutto') ? 'white' : 'transparent';
+document.getElementById('bk-mode-brutto').style.color = (mode === 'brutto') ? '#A0714F' : 'white';
+document.getElementById('bk-mode-brutto').style.borderColor = (mode === 'brutto') ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('bk-mode-netto').style.background = (mode === 'netto') ? 'white' : 'transparent';
+document.getElementById('bk-mode-netto').style.color = (mode === 'netto') ? '#A0714F' : 'white';
+document.getElementById('bk-mode-netto').style.borderColor = (mode === 'netto') ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('bk-brutto-group').style.display = (mode === 'brutto') ? 'block' : 'none';
+document.getElementById('bk-netto-group').style.display = (mode === 'netto') ? 'block' : 'none';
+document.getElementById('bk-brutto-display').style.display = (mode === 'netto') ? 'block' : 'none';
+if (mode === 'brutto') bérkalkSzámol(); else bérkalkSzámolFromNettó();
+}
+function bérkalkSetTárs(típus) {
+bkTárs = típus;
+document.getElementById('bk-btn-tao').style.background = (típus === 'tao') ? 'white' : 'transparent';
+document.getElementById('bk-btn-tao').style.color = (típus === 'tao') ? '#A0714F' : 'white';
+document.getElementById('bk-btn-tao').style.borderColor = (típus === 'tao') ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('bk-btn-kiva').style.background = (típus === 'kiva') ? 'white' : 'transparent';
+document.getElementById('bk-btn-kiva').style.color = (típus === 'kiva') ? '#A0714F' : 'white';
+document.getElementById('bk-btn-kiva').style.borderColor = (típus === 'kiva') ? 'white' : 'rgba(255,255,255,0.4)';
+if (bkMode === 'brutto') bérkalkSzámol(); else bérkalkSzámolFromNettó();
+}
+function bérkalkResetBruttó() {
+const ora = parseFloat(document.getElementById('bk-ora').value) || 40;
+const szakképzett = document.getElementById('bk-szakképzett').checked;
+const alap = szakképzett ? 373200 : 322800; // Garantált bérminimum (2026) vagy minimálbér
+const arányosMin = Math.round(alap * (ora / 40));
+document.getElementById('bk-arányos-minbér').textContent = arányosMin.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-brutto').value = arányosMin;
+bérkalkSzámol();
+}
+function bérkalkSzámol() {
+const brutto = parseFloat(document.getElementById('bk-brutto').value) || 0;
+const ora = parseFloat(document.getElementById('bk-ora').value) || 40;
+const szakképzett = document.getElementById('bk-szakképzett').checked;
+const alap = szakképzett ? 373200 : 322800; // 2026-os értékek
+const arányosMin = Math.round(alap * (ora / 40));
+document.getElementById('bk-arányos-minbér').textContent = arányosMin.toLocaleString('hu-HU') + ' Ft';
+const szja = Math.round(brutto * 0.15);
+const tb = Math.round(brutto * 0.185);
+const összes_levonás = szja + tb;
+const netto = brutto - összes_levonás;
+const munkáltatói_pct = (bkTárs === 'tao') ? 0.13 : 0.10;
+const munkáltatói = Math.round(brutto * munkáltatói_pct);
+const nav = szja + tb + munkáltatói;
+const összes_ktg = brutto + munkáltatói;
+document.getElementById('bk-szja').textContent = szja.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-tb').textContent = tb.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-összes-levonás').textContent = összes_levonás.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-netto').textContent = netto.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-munkáltatói-label').textContent = (bkTárs === 'tao') ? 'Szocho (13%)' : 'KIVA (10%)';
+document.getElementById('bk-munkáltatói').textContent = munkáltatói.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-nav').textContent = nav.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-összes-ktg').textContent = összes_ktg.toLocaleString('hu-HU') + ' Ft';
+}
+function bérkalkSzámolFromNettó() {
+const netto = parseFloat(document.getElementById('bk-netto-input').value) || 0;
+// Nettó = Bruttó - (Bruttó × 0.15) - (Bruttó × 0.185)
+// Nettó = Bruttó × (1 - 0.15 - 0.185) = Bruttó × 0.665
+// Bruttó = Nettó / 0.665
+const brutto = Math.round(netto / 0.665);
+// Most számoljuk ki az eredményt
+const ora = parseFloat(document.getElementById('bk-ora').value) || 40;
+const szakképzett = document.getElementById('bk-szakképzett').checked;
+const alap = szakképzett ? 373200 : 322800; // 2026-os értékek
+const arányosMin = Math.round(alap * (ora / 40));
+document.getElementById('bk-arányos-minbér').textContent = arányosMin.toLocaleString('hu-HU') + ' Ft';
+const szja = Math.round(brutto * 0.15);
+const tb = Math.round(brutto * 0.185);
+const összes_levonás = szja + tb;
+const netto_calc = brutto - összes_levonás;
+const munkáltatói_pct = (bkTárs === 'tao') ? 0.13 : 0.10;
+const munkáltatói = Math.round(brutto * munkáltatói_pct);
+const nav = szja + tb + munkáltatói;
+const összes_ktg = brutto + munkáltatói;
+// Bruttót is mutassuk
+document.getElementById('bk-brutto').value = brutto;
+document.getElementById('bk-brutto-value').textContent = brutto.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-szja').textContent = szja.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-tb').textContent = tb.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-összes-levonás').textContent = összes_levonás.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-netto').textContent = netto_calc.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-munkáltatói-label').textContent = (bkTárs === 'tao') ? 'Szocho (13%)' : 'KIVA (10%)';
+document.getElementById('bk-munkáltatói').textContent = munkáltatói.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-nav').textContent = nav.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('bk-összes-ktg').textContent = összes_ktg.toLocaleString('hu-HU') + ' Ft';
+}
+document.addEventListener('DOMContentLoaded', function() {
+bérkalkResetBruttó();
+});
+// --- BÉRKALKULATOR VÉGE ---
+// --- OSZTALÉK KALKULATOR ---
+let osztakSzocho = true; // true = szocho van, false = csak SZJA
+let osztakMode = 'brutto'; // 'brutto' vagy 'netto'
+function osztakSetMode(mode) {
+osztakMode = mode;
+document.getElementById('osztak-mode-brutto').style.background = (mode === 'brutto') ? 'white' : 'transparent';
+document.getElementById('osztak-mode-brutto').style.color = (mode === 'brutto') ? '#6B46C1' : 'white';
+document.getElementById('osztak-mode-brutto').style.borderColor = (mode === 'brutto') ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('osztak-mode-netto').style.background = (mode === 'netto') ? 'white' : 'transparent';
+document.getElementById('osztak-mode-netto').style.color = (mode === 'netto') ? '#6B46C1' : 'white';
+document.getElementById('osztak-mode-netto').style.borderColor = (mode === 'netto') ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('osztak-brutto-group').style.display = (mode === 'brutto') ? 'block' : 'none';
+document.getElementById('osztak-netto-group').style.display = (mode === 'netto') ? 'block' : 'none';
+document.getElementById('osztak-brutto-display').style.display = (mode === 'netto') ? 'block' : 'none';
+if (mode === 'brutto') osztakSzámol(); else osztakSzámolFromNettó();
+}
+function osztakSetSzocho(vanSzocho) {
+osztakSzocho = vanSzocho;
+document.getElementById('osztak-btn-szochoval').style.background = vanSzocho ? 'white' : 'transparent';
+document.getElementById('osztak-btn-szochoval').style.color = vanSzocho ? '#6B46C1' : 'white';
+document.getElementById('osztak-btn-szochoval').style.borderColor = vanSzocho ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('osztak-btn-szochonelkül').style.background = !vanSzocho ? 'white' : 'transparent';
+document.getElementById('osztak-btn-szochonelkül').style.color = !vanSzocho ? '#6B46C1' : 'white';
+document.getElementById('osztak-btn-szochonelkül').style.borderColor = !vanSzocho ? 'white' : 'rgba(255,255,255,0.4)';
+document.getElementById('osztak-szocho-row').style.display = vanSzocho ? 'flex' : 'none';
+if (osztakMode === 'brutto') osztakSzámol(); else osztakSzámolFromNettó();
+}
+function osztakSzámol() {
+const brutto = parseFloat(document.getElementById('osztak-brutto').value) || 0;
+const szja = Math.round(brutto * 0.15);
+const szocho = osztakSzocho ? Math.round(brutto * 0.13) : 0;
+const összes_levonás = szja + szocho;
+const netto = brutto - összes_levonás;
+document.getElementById('osztak-szja').textContent = szja.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-szocho').textContent = szocho.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-összes-levonás').textContent = összes_levonás.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-netto').textContent = netto.toLocaleString('hu-HU') + ' Ft';
+}
+function osztakSzámolFromNettó() {
+const netto = parseFloat(document.getElementById('osztak-netto-input').value) || 0;
+// Nettó = Bruttó - (Bruttó × 0.15) - (Bruttó × 0.13)  ha szocho van
+// Nettó = Bruttó × (1 - 0.15 - 0.13) = Bruttó × 0.72  ha szocho van
+// Nettó = Bruttó × (1 - 0.15) = Bruttó × 0.85  ha nincs szocho
+const szorzó = osztakSzocho ? 0.72 : 0.85;
+const brutto = Math.round(netto / szorzó);
+const szja = Math.round(brutto * 0.15);
+const szocho = osztakSzocho ? Math.round(brutto * 0.13) : 0;
+const összes_levonás = szja + szocho;
+const netto_calc = brutto - összes_levonás;
+document.getElementById('osztak-brutto').value = brutto;
+document.getElementById('osztak-brutto-value').textContent = brutto.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-szja').textContent = szja.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-szocho').textContent = szocho.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-összes-levonás').textContent = összes_levonás.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('osztak-netto').textContent = netto_calc.toLocaleString('hu-HU') + ' Ft';
+}
+document.addEventListener('DOMContentLoaded', function() {
+osztakSzámol();
+});
+// --- OSZTALÉK KALKULATOR VÉGE ---
+// --- ÁFA KALKULATOR ---
+let afaKulcs = 27; // 27, 18, vagy 5
+function afaSetKulcs(kulcs) {
+afaKulcs = kulcs;
+// Gombok frissítése
+['27', '18', '5'].forEach(k => {
+const btn = document.getElementById(`afa-btn-${k}`);
+const active = (k == kulcs);
+btn.style.background = active ? 'white' : 'transparent';
+btn.style.color = active ? '#2196F3' : 'white';
+btn.style.borderColor = active ? 'white' : 'rgba(255,255,255,0.4)';
+});
+document.getElementById('afa-kulcs-label').textContent = `(${kulcs}%)`;
+// Újraszámol az aktuális értékekkel
+const netto = parseFloat(document.getElementById('afa-netto').value);
+const afa = parseFloat(document.getElementById('afa-osszeg').value);
+const brutto = parseFloat(document.getElementById('afa-brutto').value);
+if (!isNaN(netto)) afaSzámolFromNettó();
+else if (!isNaN(afa)) afaSzámolFromÁFA();
+else if (!isNaN(brutto)) afaSzámolFromBruttó();
+}
+function afaSzámolFromNettó() {
+const netto = parseFloat(document.getElementById('afa-netto').value) || 0;
+const afa = Math.round(netto * afaKulcs / 100);
+const brutto = netto + afa;
+document.getElementById('afa-osszeg').value = afa;
+document.getElementById('afa-brutto').value = brutto;
+afaFrissítEredmény(netto, afa, brutto);
+}
+function afaSzámolFromÁFA() {
+const afa = parseFloat(document.getElementById('afa-osszeg').value) || 0;
+const netto = Math.round(afa * 100 / afaKulcs);
+const brutto = netto + afa;
+document.getElementById('afa-netto').value = netto;
+document.getElementById('afa-brutto').value = brutto;
+afaFrissítEredmény(netto, afa, brutto);
+}
+function afaSzámolFromBruttó() {
+const brutto = parseFloat(document.getElementById('afa-brutto').value) || 0;
+// Bruttó = Nettó × (1 + kulcs/100)
+// Nettó = Bruttó / (1 + kulcs/100)
+const netto = Math.round(brutto / (1 + afaKulcs / 100));
+const afa = brutto - netto;
+document.getElementById('afa-netto').value = netto;
+document.getElementById('afa-osszeg').value = afa;
+afaFrissítEredmény(netto, afa, brutto);
+}
+function afaFrissítEredmény(netto, afa, brutto) {
+document.getElementById('afa-netto-result').textContent = netto.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('afa-osszeg-result').textContent = afa.toLocaleString('hu-HU') + ' Ft';
+document.getElementById('afa-brutto-result').textContent = brutto.toLocaleString('hu-HU') + ' Ft';
+}
+// --- ÁFA KALKULATOR VÉGE ---
+// --- CÉGAUTÓADÓ KALKULATOR ---
+let cegautoKorny = '0-4'; // '0-4', '5', vagy '6-10'
+// Adó táblázat HAVI összegek: [teljesítmény_kategória][környezetvédelmi_osztály]
+const cegautoAdoTabla = {
+  '0-50': { '0-4': 38500, '5': 20000, '6-10': 17500 },
+  '51-90': { '0-4': 51000, '5': 25000, '6-10': 20000 },
+  '91-120': { '0-4': 76000, '5': 51000, '6-10': 25000 },
+  '120+': { '0-4': 101000, '5': 76000, '6-10': 51000 }
+};
+function cegautoSetKorny(korny) {
+  cegautoKorny = korny;
+  // Gombok frissítése
+  ['0-4', '5', '6-10'].forEach(k => {
+    const btn = document.getElementById(`cegauto-btn-${k}`);
+    const active = (k === korny);
+    btn.style.background = active ? 'white' : 'transparent';
+    btn.style.color = active ? '#10B981' : 'white';
+    btn.style.borderColor = active ? 'white' : 'rgba(255,255,255,0.4)';
+  });
+  cegautoSzámol();
+}
+function cegautoSzámol() {
+  const kw = parseFloat(document.getElementById('cegauto-kw').value) || 0;
+  if (kw === 0) {
+    document.getElementById('cegauto-eves').textContent = '0 Ft';
+    document.getElementById('cegauto-havi').textContent = '0 Ft';
+    document.getElementById('cegauto-kategoria').textContent = '-';
+    return;
+  }
+  // Teljesítmény kategória meghatározása
+  let kategoria;
+  let kategoriaText;
+  if (kw <= 50) {
+    kategoria = '0-50';
+    kategoriaText = '0-50 kW';
+  } else if (kw <= 90) {
+    kategoria = '51-90';
+    kategoriaText = '51-90 kW';
+  } else if (kw <= 120) {
+    kategoria = '91-120';
+    kategoriaText = '91-120 kW';
+  } else {
+    kategoria = '120+';
+    kategoriaText = '120+ kW';
+  }
+  // Havi adó lekérése, éves = havi × 12
+  const haviAdo = cegautoAdoTabla[kategoria][cegautoKorny];
+  const evesAdo = haviAdo * 12;
+  document.getElementById('cegauto-havi').textContent = haviAdo.toLocaleString('hu-HU') + ' Ft';
+  document.getElementById('cegauto-eves').textContent = evesAdo.toLocaleString('hu-HU') + ' Ft';
+  document.getElementById('cegauto-kategoria').textContent = kategoriaText;
+}
+// --- CÉGAUTÓADÓ KALKULATOR VÉGE ---
+// --- 500 KM KÖLTSÉGELSZÁMOLÁS KALKULATOR ---
+// 2025-ös NAV üzemanyagárak
+const nav2025Arak = {
+  benzin: [626, 631, 638, 624, 612, 594, 592, 596, 590, 593, 591, 580],  // jan-dec
+  gazolaj: [638, 651, 649, 638, 621, 603, 586, 600, 610, 597, 596, 587]  // jan-dec
+};
+
+// NAV fogyasztási norma táblázatok (cm³ → l/100km)
+const fogyasztasiNorma = {
+  benzin: [
+    {max: 1000, norma: 7.6},
+    {max: 1500, norma: 8.6},
+    {max: 2000, norma: 9.5},
+    {max: 3000, norma: 11.4},
+    {max: 999999, norma: 13.3}  // 3001 felett
+  ],
+  gazolaj: [
+    {max: 1500, norma: 5.7},
+    {max: 2000, norma: 6.7},
+    {max: 3000, norma: 7.6},
+    {max: 999999, norma: 9.5}  // 3001 felett
+  ]
+};
+
+let km500UzemanyagTipus = 'benzin';
+
+function km500GetFogyasztas(henger, tipus) {
+  const tabla = fogyasztasiNorma[tipus];
+  for (let sor of tabla) {
+    if (henger <= sor.max) {
+      return sor.norma;
+    }
+  }
+  return 0;
+}
+
+function km500SetUzemanyag(tipus) {
+  km500UzemanyagTipus = tipus;
+  document.getElementById('km500-btn-benzin').style.background = (tipus === 'benzin') ? 'white' : 'transparent';
+  document.getElementById('km500-btn-benzin').style.color = (tipus === 'benzin') ? '#F59E0B' : 'white';
+  document.getElementById('km500-btn-benzin').style.borderColor = (tipus === 'benzin') ? 'white' : 'rgba(255,255,255,0.4)';
+  document.getElementById('km500-btn-gazolaj').style.background = (tipus === 'gazolaj') ? 'white' : 'transparent';
+  document.getElementById('km500-btn-gazolaj').style.color = (tipus === 'gazolaj') ? '#F59E0B' : 'white';
+  document.getElementById('km500-btn-gazolaj').style.borderColor = (tipus === 'gazolaj') ? 'white' : 'rgba(255,255,255,0.4)';
+  
+  // Árak frissítése
+  const arak = nav2025Arak[tipus];
+  for (let i = 1; i <= 12; i++) {
+    document.getElementById(`km500-ar-${i}`).value = arak[i-1];
+  }
+  km500Számol();
+}
+
+function km500Számol() {
+  const henger = parseInt(document.getElementById('km500-henger').value) || 0;
+  
+  if (henger === 0) {
+    document.getElementById('km500-fogyasztas-display').textContent = '— l/100km';
+    document.getElementById('km500-uzemanyag-eves').textContent = '0 Ft';
+    document.getElementById('km500-eves-ossz').textContent = '0 Ft';
+    return;
+  }
+  
+  // Fogyasztási norma meghatározása
+  const fogyasztas = km500GetFogyasztas(henger, km500UzemanyagTipus);
+  document.getElementById('km500-fogyasztas-display').textContent = fogyasztas + ' l/100km';
+  
+  // Összes havi üzemanyag költség összege
+  let uzemanyagEvesOssz = 0;
+  
+  // Minden hónapra külön számolunk
+  for (let i = 1; i <= 12; i++) {
+    const ar = parseFloat(document.getElementById(`km500-ar-${i}`).value) || 0;
+    if (ar > 0) {
+      // Havi 500 km üzemanyag költsége: Fogyasztás (l/100km) × 500 km / 100 × Ár (Ft/l)
+      const uzemanyagHavi = Math.round((fogyasztas * 500 / 100) * ar);
+      uzemanyagEvesOssz += uzemanyagHavi;
+    }
+  }
+  
+  // Fenntartási költség: 12 hó × 7500 Ft = 90.000 Ft
+  const fenntartasEves = 90000;
+  
+  // Éves összesen
+  const evesOssz = uzemanyagEvesOssz + fenntartasEves;
+  
+  document.getElementById('km500-uzemanyag-eves').textContent = uzemanyagEvesOssz.toLocaleString('hu-HU') + ' Ft';
+  document.getElementById('km500-eves-ossz').textContent = evesOssz.toLocaleString('hu-HU') + ' Ft';
+}
+
+// Inicializálás - benzin árak betöltése
+document.addEventListener('DOMContentLoaded', function() {
+  km500SetUzemanyag('benzin');
+});
+// --- 500 KM KÖLTSÉGELSZÁMOLÁS KALKULATOR VÉGE ---
+// --- ELHATÁROLÁS KALKULÁTOR ---
+let elhatárolTipus = 'koltseg'; // alapértelmezett: költség
+
+function elhatárolSetTipus(tipus) {
+  elhatárolTipus = tipus;
+  
+  // Gombok színezése
+  if (tipus === 'koltseg') {
+    document.getElementById('elh-btn-koltseg').style.background = 'white';
+    document.getElementById('elh-btn-koltseg').style.color = '#8B5CF6';
+    document.getElementById('elh-btn-koltseg').style.borderColor = 'white';
+    document.getElementById('elh-btn-bevetel').style.background = 'transparent';
+    document.getElementById('elh-btn-bevetel').style.color = 'white';
+    document.getElementById('elh-btn-bevetel').style.borderColor = 'rgba(255,255,255,0.4)';
+  } else {
+    document.getElementById('elh-btn-bevetel').style.background = 'white';
+    document.getElementById('elh-btn-bevetel').style.color = '#8B5CF6';
+    document.getElementById('elh-btn-bevetel').style.borderColor = 'white';
+    document.getElementById('elh-btn-koltseg').style.background = 'transparent';
+    document.getElementById('elh-btn-koltseg').style.color = 'white';
+    document.getElementById('elh-btn-koltseg').style.borderColor = 'rgba(255,255,255,0.4)';
+  }
+  
+  elhatárolSzámol();
+}
+
+function elhatárolSzámol() {
+  const szamlaKelte = document.getElementById('elh-szamla-kelte').value;
+  const teljKezd = document.getElementById('elh-telj-kezd').value;
+  const teljVeg = document.getElementById('elh-telj-veg').value;
+  const afaTelj = document.getElementById('elh-afa-telj').value;
+  
+  if (!szamlaKelte || !teljKezd || !teljVeg || !afaTelj) {
+    document.getElementById('elh-ev').textContent = '—';
+    document.getElementById('elh-aktiv').textContent = '—';
+    document.getElementById('elh-passziv').textContent = '—';
+    return;
+  }
+  
+  const szamlaEv = new Date(szamlaKelte).getFullYear();
+  const teljKezdEv = new Date(teljKezd).getFullYear();
+  const teljVegEv = new Date(teljVeg).getFullYear();
+  
+  let aktiv = 'NEM';
+  let passziv = 'NEM';
+  let evText = '';
+  
+  // 1. eset: Számla kelte 2026, de teljesítés 2025-ben van
+  if (szamlaEv === 2026 && teljKezdEv === 2025 && teljVegEv === 2025) {
+    evText = '2025';
+    aktiv = 'NEM';
+    passziv = 'NEM';
+  }
+  // 2. eset: Költség számla - kelte 2025, időszak átnyúlik 2026-ba
+  else if (elhatárolTipus === 'koltseg' && szamlaEv === 2025 && teljVegEv === 2026) {
+    evText = '2025 és 2026';
+    aktiv = 'IGEN';
+    passziv = 'NEM';
+  }
+  // 3. eset: Költség számla - kelte 2026, de időszak 2025-ben kezdődik
+  else if (elhatárolTipus === 'koltseg' && szamlaEv === 2026 && teljKezdEv === 2025) {
+    evText = '2025 és 2026';
+    aktiv = 'NEM';
+    passziv = 'IGEN';
+  }
+  // 4. eset: Bevétel számla - kelte 2025, időszak átnyúlik 2026-ba
+  else if (elhatárolTipus === 'bevetel' && szamlaEv === 2025 && teljVegEv === 2026) {
+    evText = '2025 és 2026';
+    aktiv = 'NEM';
+    passziv = 'IGEN';
+  }
+  // 5. eset: Bevétel számla - kelte 2026, de időszak 2025-ben kezdődik
+  else if (elhatárolTipus === 'bevetel' && szamlaEv === 2026 && teljKezdEv === 2025) {
+    evText = '2025 és 2026';
+    aktiv = 'IGEN';
+    passziv = 'NEM';
+  }
+  // Normál eset: minden egy évben
+  else {
+    evText = szamlaEv.toString();
+    aktiv = 'NEM';
+    passziv = 'NEM';
+  }
+  
+  document.getElementById('elh-ev').textContent = evText;
+  document.getElementById('elh-aktiv').textContent = aktiv;
+  document.getElementById('elh-passziv').textContent = passziv;
+  
+  // Színezés
+  const aktivElem = document.getElementById('elh-aktiv');
+  const passzivElem = document.getElementById('elh-passziv');
+  
+  if (aktiv === 'IGEN') {
+    aktivElem.style.color = '#4CAF50';
+    aktivElem.style.fontWeight = 'bold';
+  } else {
+    aktivElem.style.color = '#999';
+    aktivElem.style.fontWeight = 'normal';
+  }
+  
+  if (passziv === 'IGEN') {
+    passzivElem.style.color = '#CE93D8';
+    passzivElem.style.fontWeight = 'bold';
+  } else {
+    passzivElem.style.color = '#999';
+    passzivElem.style.fontWeight = 'normal';
+  }
+}
+// --- ELHATÁROLÁS KALKULÁTOR VÉGE ---
+
+// --- EFO MINIMÁLIS ÓRABÉR KALKULÁTOR ---
+let efoSzakkepzett = false; // alapértelmezett: nem szakképzett
+
+const efoOraberek = {
+  nemSzakkepzett: 1578, // 2026-os minimális órabér
+  szakkepzett: 1866      // 2026-os szakképzett minimális órabér
+};
+
+function efoSetSzakkepzettseg(szakkepzett) {
+  efoSzakkepzett = (szakkepzett === 'igen');
+  
+  // Gombok színezése
+  if (efoSzakkepzett) {
+    document.getElementById('efo-btn-szakkepzett').style.background = 'white';
+    document.getElementById('efo-btn-szakkepzett').style.color = '#26A69A';
+    document.getElementById('efo-btn-szakkepzett').style.borderColor = 'white';
+    document.getElementById('efo-btn-nem-szakkepzett').style.background = 'transparent';
+    document.getElementById('efo-btn-nem-szakkepzett').style.color = 'white';
+    document.getElementById('efo-btn-nem-szakkepzett').style.borderColor = 'rgba(255,255,255,0.4)';
+  } else {
+    document.getElementById('efo-btn-nem-szakkepzett').style.background = 'white';
+    document.getElementById('efo-btn-nem-szakkepzett').style.color = '#26A69A';
+    document.getElementById('efo-btn-nem-szakkepzett').style.borderColor = 'white';
+    document.getElementById('efo-btn-szakkepzett').style.background = 'transparent';
+    document.getElementById('efo-btn-szakkepzett').style.color = 'white';
+    document.getElementById('efo-btn-szakkepzett').style.borderColor = 'rgba(255,255,255,0.4)';
+  }
+  
+  efoSzamol();
+}
+
+function efoSzamol() {
+  const orak = parseFloat(document.getElementById('efo-orak').value) || 8;
+  const oraber = efoSzakkepzett ? efoOraberek.szakkepzett : efoOraberek.nemSzakkepzett;
+  
+  // Számítás
+  const napiBer = Math.round(orak * oraber);
+  
+  // Megjelenítés
+  document.getElementById('efo-oraber').textContent = oraber.toLocaleString('hu-HU') + ' Ft/óra';
+  document.getElementById('efo-napi-ber').textContent = napiBer.toLocaleString('hu-HU') + ' Ft';
+}
+
+// Kezdeti számítás betöltéskor
+if (document.getElementById('efo-orak')) {
+  efoSzamol();
+}
+// --- EFO MINIMÁLIS ÓRABÉR KALKULÁTOR VÉGE ---
+function számolÁFA() {
+const input = document.getElementById('afa-indulas-dátum');
+const eredmenyDiv = document.getElementById('afa-eredmeny');
+const napokText = document.getElementById('afa-napok-text');
+const keretValue = document.getElementById('afa-keret-value');
+const képletText = document.getElementById('afa-képlet-text');
+if (!input.value) {
+eredmenyDiv.style.display = 'none';
+return;
+}
+const indulas = new Date(input.value);
+const évVége = new Date('2026-12-31');
+const évEleje = new Date('2026-01-01');
+if (indulas < évEleje || indulas > évVége) {
+eredmenyDiv.style.display = 'none';
+return;
+}
+const msPerNap = 24 * 60 * 60 * 1000;
+const aktivNapok = Math.round((évVége - indulas) / msPerNap) + 1;
+const arányosKeret = Math.round((20000000 / 365) * aktivNapok);
+const hónapok = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const indulásStr = indulas.getFullYear() + '. ' + hónapok[indulas.getMonth()] + ' ' + indulas.getDate() + '.';
+eredmenyDiv.style.display = 'block';
+if (aktivNapok === 365) {
+napokText.innerHTML = 'Január 1-től indul → teljes év';
+keretValue.textContent = '20 000 000 Ft';
+képletText.textContent = 'Teljes évi keret, arányosítás nem szükséges.';
+} else {
+napokText.innerHTML = 'Indulás: ' + indulásStr + ' → Aktív napok: <strong>' + aktivNapok + ' nap</strong>';
+keretValue.textContent = arányosKeret.toLocaleString('hu-HU') + ' Ft';
+képletText.textContent = '20 000 000 / 365 × ' + aktivNapok + ' = ' + arányosKeret.toLocaleString('hu-HU') + ' Ft';
+}
+}
+function számolÁtalány() {
+const input = document.getElementById('atalany-indulas-datum');
+const eredmenyDiv = document.getElementById('atalany-eredmeny');
+const napokText = document.getElementById('atalany-napok-text');
+const keretValue = document.getElementById('atalany-keret-value');
+const képletText = document.getElementById('atalany-keplet-text');
+if (!input.value) {
+eredmenyDiv.style.display = 'none';
+return;
+}
+const indulas = new Date(input.value);
+const évVége = new Date('2026-12-31');
+const évEleje = new Date('2026-01-01');
+if (indulas < évEleje || indulas > évVége) {
+eredmenyDiv.style.display = 'none';
+return;
+}
+const msPerNap = 24 * 60 * 60 * 1000;
+const aktivNapok = Math.round((évVége - indulas) / msPerNap) + 1;
+const arányosKeret = Math.round((38736000 / 365) * aktivNapok);
+const hónapok = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const indulásStr = indulas.getFullYear() + '. ' + hónapok[indulas.getMonth()] + ' ' + indulas.getDate() + '.';
+eredmenyDiv.style.display = 'block';
+if (aktivNapok === 365) {
+napokText.innerHTML = 'Január 1-től indul → teljes év';
+keretValue.textContent = '38 736 000 Ft';
+képletText.textContent = 'Teljes évi bevételi határ, arányosítás nem szükséges.';
+} else {
+napokText.innerHTML = 'Indulás: ' + indulásStr + ' → Aktív napok: <strong>' + aktivNapok + ' nap</strong>';
+keretValue.textContent = arányosKeret.toLocaleString('hu-HU') + ' Ft';
+képletText.textContent = '38 736 000 / 365 × ' + aktivNapok + ' = ' + arányosKeret.toLocaleString('hu-HU') + ' Ft';
+}
+}
+function számolHIPA() {
+const input = document.getElementById('hipa-szuneteles-datum');
+const eredmenyDiv = document.getElementById('hipa-eredmeny');
+const szovegDiv = document.getElementById('hipa-szoveg');
+const hatarido = document.getElementById('hipa-hatarido');
+if (!input.value) {
+eredmenyDiv.style.display = 'none';
+return;
+}
+const kezdoNap = new Date(input.value);
+const msPerNap = 24 * 60 * 60 * 1000;
+const hatarNap = new Date(kezdoNap.getTime() + (179 * msPerNap));
+const hónapok = ['január','február','március','április','május','június','július','augusztus','szeptember','október','november','december'];
+const kezdoStr = kezdoNap.getFullYear() + '. ' + hónapok[kezdoNap.getMonth()] + ' ' + kezdoNap.getDate() + '.';
+const hatarStr = hatarNap.getFullYear() + '. ' + hónapok[hatarNap.getMonth()] + ' ' + hatarNap.getDate() + '.';
+eredmenyDiv.style.display = 'block';
+szovegDiv.innerHTML = 'Szünetelés kezdete: <strong>' + kezdoStr + '</strong> → 180. nap:';
+hatarido.textContent = hatarStr;
+}
+function toggleSubSection(id) {
+const section = document.getElementById(id);
+// Keressük a trigger div-et (az előző testvér)
+const trigger = section.previousElementSibling;
+const arrow = trigger ? trigger.querySelector('.data-label span:last-child') : null;
+if (section.style.display === 'none') {
+section.style.display = 'block';
+if (arrow) arrow.textContent = '▲';
+} else {
+section.style.display = 'none';
+if (arrow) arrow.textContent = '▼';
+}
+}
+// Search functionality
+const searchInput = document.getElementById('searchInput');
+const searchClear = document.getElementById('search-clear');
+searchInput.addEventListener('input', function(e) {
+const searchTerm = e.target.value.toLowerCase();
+searchClear.style.display = searchTerm.length > 0 ? 'block' : 'none';
+let firstMatch = null;
+document.querySelectorAll('.category-card').forEach(card => {
+const text = card.textContent.toLowerCase();
+if (text.includes(searchTerm)) {
+card.style.display = 'block';
+if (searchTerm.length > 2) {
+card.classList.add('active');
+if (!firstMatch) firstMatch = card;
+}
+} else {
+card.style.display = 'none';
+}
+});
+if (searchTerm === '') {
+document.querySelectorAll('.category-card').forEach(card => {
+card.style.display = 'block';
+card.classList.remove('active');
+});
+} else if (firstMatch) {
+setTimeout(() => { firstMatch.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 150);
+}
+});
+// --- FELÜL GOMB ---
+const felulGomb = document.createElement('button');
+felulGomb.id = 'felul-gomb';
+felulGomb.innerHTML = '↑';
+felulGomb.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+document.body.appendChild(felulGomb);
+window.addEventListener('scroll', () => {
+felulGomb.style.display = (window.scrollY > 400) ? 'block' : 'none';
+});
+</script>
+<footer style="background: white; padding: 20px; text-align: center; margin-top: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+<p style="color: #666; font-size: 0.9em; margin: 0;">Készítette: <strong style="color: #A0714F;">Váróci Ágnes</strong></p>
+<p style="color: #999; font-size: 0.8em; margin: 5px 0 0 0;">SukorADÓ Könyvelőiroda | 2026</p>
+</footer>
+<!-- Desktop Popup Overlay -->
+<div id="desktop-popup-overlay" onclick="closeDesktopPopup()">
+  <div id="desktop-popup-content" onclick="event.stopPropagation()">
+    <!-- IDE kerül a kártya tartalma dinamikusan -->
+  </div>
+</div>
+
+</body>
+</html>
